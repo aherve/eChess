@@ -29,10 +29,11 @@ export class Gui {
 
   constructor() {
     this.screen = blessed.screen({
-      smartCSR: true,
       autoPadding: true,
-      terminal: "xterm-basic",
       fullUnicode: true,
+      smartCSR: true,
+      terminal: "xterm-basic",
+      title: "eChess",
     });
     this.screen.key(["escape", "q", "C-c"], () => {
       return process.exit(0);
