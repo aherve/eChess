@@ -18,6 +18,11 @@ export async function playCaptureSound() {
   await genericPlay(`${__dirname}/../sounds/public_sound_standard_Capture.mp3`);
 }
 
+export async function playDingSound() {
+  logger.info("Playing draw sound");
+  await genericPlay(`${__dirname}/../sounds/ding.mp3`);
+}
+
 async function genericPlay(path: string): Promise<void> {
   return new Promise((resolve, reject) => {
     player.play(path, (err) => {

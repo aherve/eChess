@@ -161,6 +161,11 @@ async function emitLichessEvents(gameId: string, game: GameHandler, gui: Gui) {
         }
         break;
       }
+      case "chatLine": {
+        logger.info("adding chat line", lichessEvent);
+        gui.addChatLine(lichessEvent);
+        break;
+      }
       default:
         logger.info("Ignoring lichess event", lichessEvent);
     }

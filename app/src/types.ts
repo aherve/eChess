@@ -12,6 +12,7 @@ export const ChatLineEventShema = z.object({
   text: z.string(),
   username: z.string(),
 });
+export type ChatLineEvent = z.infer<typeof ChatLineEventShema>;
 
 export const GameStateEventSchema = z.object({
   type: z.literal("gameState"),

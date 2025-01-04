@@ -4,8 +4,13 @@ import { SquareState } from "./utils";
 import { asciiPlug, asciiUsb } from "./ascii-art";
 import { abortGame, createSeek, drawGame, resignGame } from "./lichess";
 import { logger } from "./logger";
-import type { Game, GameStateEvent } from "./types";
-import { playCaptureSound, playMoveSound, playNotifySound } from "./sounds";
+import type { ChatLineEvent, Game, GameStateEvent } from "./types";
+import {
+  playCaptureSound,
+  playDingSound,
+  playMoveSound,
+  playNotifySound,
+} from "./sounds";
 import { Chess } from "chess.js";
 
 type ClockAnchor = {
@@ -26,6 +31,7 @@ export class Gui {
   private opponentName: string | null = null;
   private seekAbortController: AbortController | null = null;
   private lastGameResult: "won" | "lost" | null = null;
+  private chatMessages: string[] = [];
 
   constructor() {
     this.screen = blessed.screen({
@@ -46,11 +52,16 @@ export class Gui {
     this.gameId = null;
     this.opponentName = null;
     this.abortSeek();
+    this.chatMessages = [];
     playNotifySound();
   }
 
   public setBoardStatus(hasBoard: boolean) {
     this.hasBoard = hasBoard;
+  }
+  public addChatLine(event: ChatLineEvent) {
+    playDingSound();
+    this.chatMessages.push(`<${event.username}>:${event.text}`);
   }
 
   public startGame(game: Game) {
@@ -60,6 +71,7 @@ export class Gui {
     this.color = game.color;
     this.gameId = game.fullId;
     this.opponentName = `${game.opponent.username} (${game.opponent.rating})`;
+    this.chatMessages = [];
   }
 
   public updateFromLichess(event: GameStateEvent) {
@@ -136,7 +148,7 @@ export class Gui {
       return;
     }
     const opponentColor = this.color === "white" ? "black" : "white";
-    this.grid.set(0, 0, 6, 10, blessed.box, {
+    this.grid.set(0, 0, 5, 10, blessed.box, {
       align: "center",
       content:
         `${opponentColor}: ${this.opponentName}` +
@@ -147,13 +159,17 @@ export class Gui {
         }) +
         (this.isMyTurn ? "  " : " \u{1F7E2}"),
     });
-    this.grid.set(6, 0, 6, 10, blessed.box, {
+    this.grid.set(5, 0, 5, 10, blessed.box, {
       align: "center",
       content:
         `You play ${this.color}` +
         "\n" +
         this.getPrettyTime({ forColor: this.color, isPlaying: this.isMyTurn }) +
         (this.isMyTurn ? " \u{1F7E2}" : "  "),
+    });
+    this.grid.set(10, 0, 2, 10, blessed.box, {
+      align: "left",
+      content: this.chatMessages.slice(-4).join("\n"),
     });
     const resign = this.grid.set(0, 10, 4, 2, blessed.button, {
       top: "center",
