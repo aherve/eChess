@@ -129,11 +129,14 @@ export class Gui {
 
   private async autoRefresh() {
     this.render();
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 300));
     this.autoRefresh();
   }
 
   private render() {
+    for (const child of this.screen.children) {
+      this.screen.remove(child);
+    }
     if (!this.hasBoard) {
       return this.renderNoBoard();
     }
