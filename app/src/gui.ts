@@ -251,23 +251,23 @@ export class Gui {
       });
     } else {
       box.content = "Ready for a new game";
-      const fifteenTen = this.grid.set(4, 1, 5, 5, blessed.button, {
+      const rapid = this.grid.set(4, 1, 5, 5, blessed.button, {
         top: "center",
         align: "center",
         content: "Create 15 | 10 game",
         left: "center",
         mouse: true,
       });
-      const tenZero = this.grid.set(4, 6, 5, 5, blessed.button, {
+      rapid.on("press", () => this.seekGame({ time: 15, increment: 10 }));
+
+      const classical = this.grid.set(4, 6, 5, 5, blessed.button, {
         top: "center",
         align: "center",
-        content: "Create 10 | 0 game",
+        content: "Create 30 | 20 game",
         left: "center",
         mouse: true,
       });
-
-      fifteenTen.on("press", () => this.seekGame({ time: 15, increment: 10 }));
-      tenZero.on("press", () => this.seekGame({ time: 10, increment: 0 }));
+      classical.on("press", () => this.seekGame({ time: 30, increment: 20 }));
     }
 
     this.screen.render();
