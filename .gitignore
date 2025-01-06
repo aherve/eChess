@@ -3,3 +3,4 @@ build
 *.lck
 \#auto_saved_files#
 .DS_Store
+.vitest-cache

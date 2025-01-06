@@ -15,6 +15,56 @@ export async function claimVictory(gameId: string) {
   return claimed.ok;
 }
 
+export async function resignGame({ gameId }: { gameId: string }) {
+  const resigned = await lichessFetch(
+    `board/game/${gameId}/resign`,
+    {},
+    "POST"
+  );
+  return resigned.ok;
+}
+export async function abortGame({ gameId }: { gameId: string }) {
+  const aborted = await lichessFetch(`board/game/${gameId}/abort`, {}, "POST");
+  return aborted.ok;
+}
+
+export async function drawGame({ gameId }: { gameId: string }) {
+  const drawed = await lichessFetch(
+    `board/game/${gameId}/draw/yes`,
+    {},
+    "POST"
+  );
+  return drawed.ok;
+}
+
+export async function createSeek({
+  time,
+  increment,
+}: {
+  time: number;
+  increment: number;
+}) {
+  logger.info("seeking game", { time, increment });
+  const controller = new AbortController();
+  const seek = await lichessFetch(
+    "board/seek",
+    {
+      rated: "true",
+      time: `${time}`,
+      increment: `${increment}`,
+      variant: "standard",
+      ratingRange: "",
+    },
+    "POST",
+    controller.signal
+  );
+  if (!seek.ok) {
+    logger.error("could not seek game", await seek.text());
+    throw new Error("Error while creating seek");
+  }
+  return controller;
+}
+
 export async function playMove(gameId: string, move: string) {
   const played = await lichessFetch(
     `board/game/${gameId}/move/${move}`,
@@ -83,16 +133,27 @@ export async function findAndWatch(): Promise<Game | null> {
 function lichessFetch(
   path: string,
   params?: Record<string, string>,
-  method = "GET"
+  method: "GET" | "POST" = "GET",
+  signal?: AbortSignal
 ) {
-  return fetch(
-    `https://lichess.org/api/${path}?${new URLSearchParams(params ?? {})}`,
-    {
-      keepalive: true,
-      method: method ?? "GET",
-      headers: {
-        Authorization: `Bearer ${lichessToken}`,
-      },
-    }
-  );
+  const url =
+    method === "GET"
+      ? `https://lichess.org/api/${path}?${new URLSearchParams(params ?? {})}`
+      : `https://lichess.org/api/${path}`;
+
+  const hasBody =
+    method === "POST" && !!params && Object.keys(params).length > 0;
+
+  return fetch(url, {
+    signal,
+    keepalive: true,
+    method: method ?? "GET",
+    headers: {
+      Authorization: `Bearer ${lichessToken}`,
+      ...(hasBody
+        ? { "Content-Type": "application/x-www-form-urlencoded" }
+        : {}),
+    },
+    ...(hasBody ? { body: new URLSearchParams(params) } : {}),
+  });
 }

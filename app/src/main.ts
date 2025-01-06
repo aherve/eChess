@@ -4,12 +4,21 @@ import { GameHandler } from "./game-handler";
 import { findAndWatch, streamGame } from "./lichess";
 import { SquareState } from "./utils";
 import { logger } from "./logger";
+import { Gui } from "./gui";
 
 export async function main() {
-  const port = await openSerial();
+  let gui = new Gui();
+  let port: SerialPort | null = null;
+  while (!port) {
+    port = await openSerial();
+    if (!port) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
+  }
+  gui.setBoardStatus(true);
   const game = new GameHandler(port);
 
-  emitSerialEvents(port, game).catch((err) => {
+  emitSerialEvents(port, game, gui).catch((err) => {
     logger.error("Error while handling serial events", err);
     process.exit(1);
   });
@@ -23,28 +32,30 @@ export async function main() {
         await new Promise((resolve) => setTimeout(resolve, 5000));
       } else {
         logger.info("found game", lichessGame.fullId);
+        gui.startGame(lichessGame);
         await game.reset(
           lichessGame.fullId,
           lichessGame.color === "white" ? "w" : "b"
         );
       }
     }
-    await emitLichessEvents(lichessGame.fullId, game);
+    await emitLichessEvents(lichessGame.fullId, game, gui);
     logger.info("game ended");
     game.terminateGame();
+    gui.terminateGame();
   }
 }
 
-async function openSerial(): Promise<SerialPort> {
+async function openSerial(): Promise<SerialPort | null> {
   const paths = (await SerialPort.list()).filter(
     (port) =>
       port.path.startsWith("/dev/tty.usbserial") ||
       port.path.startsWith("/dev/cu.usbserial")
   );
   if (paths.length === 0) {
-    throw new Error("No serial port found");
+    return null;
   }
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     logger.info("opening serial port");
     const port: SerialPort = new SerialPort(
       {
@@ -54,7 +65,8 @@ async function openSerial(): Promise<SerialPort> {
       },
       (err) => {
         if (err) {
-          return reject(err);
+          logger.error("Error while opening serial port", err);
+          return resolve(null);
         }
         logger.info("serial port opened");
         return resolve(port);
@@ -63,7 +75,7 @@ async function openSerial(): Promise<SerialPort> {
   });
 }
 
-function emitSerialEvents(port: SerialPort, game: GameHandler) {
+function emitSerialEvents(port: SerialPort, game: GameHandler, gui: Gui) {
   return new Promise((_, reject) => {
     const dataBuffer: number[] = [];
     port.on("error", reject);
@@ -74,7 +86,9 @@ function emitSerialEvents(port: SerialPort, game: GameHandler) {
       dataBuffer.push(...data);
       const latestMessage = getLatestMessage(dataBuffer);
       if (latestMessage) {
-        game.updateArduinoBoard(buildBoard(latestMessage));
+        const board = buildBoard(latestMessage);
+        gui.updateBoard(board);
+        game.updateArduinoBoard(board);
       }
     });
   });
@@ -99,15 +113,7 @@ function buildBoard(binaryState: Array<number>): Array<Array<SquareState>> {
       }
     }
   }
-  displayBoard(board);
   return board;
-}
-
-function displayBoard(board: Array<Array<string>>) {
-  for (let i = 7; i >= 0; i--) {
-    logger.info(board[i].join("|"));
-  }
-  logger.info(" ");
 }
 
 export function getLatestMessage(dataBuffer: number[]): number[] | null {
@@ -133,18 +139,18 @@ export function getLatestMessage(dataBuffer: number[]): number[] | null {
   return null;
 }
 
-async function emitLichessEvents(gameId: string, game: GameHandler) {
+async function emitLichessEvents(gameId: string, game: GameHandler, gui: Gui) {
   for await (const lichessEvent of streamGame(gameId)) {
     logger.info("got lichess event", lichessEvent);
     switch (lichessEvent.type) {
       case "gameFull": {
-        const moves = lichessEvent.state.moves;
-        await game.updateLichessMoves(moves);
+        gui.updateFromLichess(lichessEvent.state);
+        await game.updateLichessMoves(lichessEvent.state.moves);
         break;
       }
       case "gameState": {
-        const moves = lichessEvent.moves;
-        await game.updateLichessMoves(moves);
+        gui.updateFromLichess(lichessEvent);
+        await game.updateLichessMoves(lichessEvent.moves);
         break;
       }
       case "opponentGone": {
@@ -153,6 +159,11 @@ async function emitLichessEvents(gameId: string, game: GameHandler) {
         } else {
           logger.info("opponent gone, waiting for claim win");
         }
+        break;
+      }
+      case "chatLine": {
+        logger.info("adding chat line", lichessEvent);
+        gui.addChatLine(lichessEvent);
         break;
       }
       default:
