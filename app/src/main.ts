@@ -50,8 +50,9 @@ async function openSerial(): Promise<SerialPort | null> {
   const fullList = await SerialPort.list();
   const paths = fullList.filter(
     (port) =>
-      port.path.startsWith("/dev/tty.usbserial") ||
-      port.path.startsWith("/dev/cu.usbserial")
+      port.path === "/dev/ttyUSB0" || // raspberry
+      port.path.startsWith("/dev/tty.usbserial") || // macbook
+      port.path.startsWith("/dev/cu.usbserial") // macbook
   );
   logger.info("found serial ports", { fullList, paths });
   const firstPath = paths[0];
