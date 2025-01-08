@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "test": "pnpm vitest run --isolate=false",
     "test:watch": "pnpm vitest --isolate=false",
-    "emulate-serial": "socat -d -d pty,raw,echo=0 pty,raw,echo=0"
+    "build": "rm -rf build && tsc",
+    "compile": "pnpm build"
   },
   "keywords": [],
   "author": "",
@@ -15,14 +17,17 @@
     "@types/blessed": "^0.1.25",
     "@types/node": "^20.14.11",
     "@types/play-sound": "^1.1.2",
+    "typescript": "5",
     "vitest": "^1.6.0"
   },
   "dependencies": {
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.11.0",
     "chess.js": "1.0.0-beta.8",
+    "esm": "^3.2.25",
     "play-sound": "^1.1.6",
     "serialport": "^12.0.0",
+    "ts-node": "^10.9.2",
     "winston": "^3.13.1",
     "zod": "^3.23.8"
   }

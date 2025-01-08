@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Game, GameEventSchema, GameSchema } from "./types";
+import { type Game, GameEventSchema, GameSchema } from "./types";
 import { logger } from "./logger";
 
 const lichessToken =
@@ -127,7 +127,7 @@ export async function findAndWatch(): Promise<Game | null> {
   logger.info("full game data from lichess", rawJson);
   logger.info("parsed game data ", data.nowPlaying[0]);
 
-  return data.nowPlaying[0];
+  return data.nowPlaying[0] ?? null;
 }
 
 function lichessFetch(

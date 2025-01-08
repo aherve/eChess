@@ -25,8 +25,8 @@ export function indexToSquareName(i: number, j: number): Square {
 }
 
 export function squareNameToIndex(squareName: Square): [number, number] {
-  const i = ["a", "b", "c", "d", "e", "f", "g", "h"].indexOf(squareName[0]);
-  const j = ["1", "2", "3", "4", "5", "6", "7", "8"].indexOf(squareName[1]);
+  const i = ["a", "b", "c", "d", "e", "f", "g", "h"].indexOf(squareName[0]!);
+  const j = ["1", "2", "3", "4", "5", "6", "7", "8"].indexOf(squareName[1]!);
 
   return [i, j];
 }

@@ -1,1 +1,3 @@
-caffeinate -idms ~/Work/echess/app/index.ts
+#!/usr/bin/env bash
+
+(cd $(echo $(dirname $(readlink -f $0))) && pnpm node build/index.cjs)

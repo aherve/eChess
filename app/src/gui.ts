@@ -1,6 +1,6 @@
 import contrib from "blessed-contrib";
 import blessed from "blessed";
-import { SquareState } from "./utils";
+import type { SquareState } from "./utils";
 import { asciiPlug, asciiUsb } from "./ascii-art";
 import { abortGame, createSeek, drawGame, resignGame } from "./lichess";
 import { logger } from "./logger";
@@ -117,7 +117,11 @@ export class Gui {
         for (const move of lichessMoves.slice(0, -1)) {
           g.move(move);
         }
-        const lastMove = g.move(lichessMoves[lichessMoves.length - 1]);
+        const lastLichessMove = lichessMoves[lichessMoves.length - 1];
+        if (!lastLichessMove) {
+          return;
+        }
+        const lastMove = g.move(lastLichessMove);
         if (lastMove.captured) {
           return playCaptureSound();
         } else {
@@ -339,7 +343,7 @@ export class Gui {
 function buildAsciiBoard(board: Array<Array<SquareState>>): string {
   let res = "";
   for (let i = 7; i >= 0; i--) {
-    res += "|" + board[i].join("|") + "|\n";
+    res += "|" + (board[i] ?? []).join("|") + "|\n";
   }
   return res;
 }
@@ -351,17 +355,17 @@ function isUnpoweredBoard(board: Array<Array<SquareState>>): boolean {
 function isStartingPosition(board: Array<Array<SquareState>>): boolean {
   // 2 rows of white pieces
   for (const i of [0, 1]) {
-    if (board[i].some((cell) => cell !== "W")) {
+    if ((board[i] ?? []).some((cell) => cell !== "W")) {
       return false;
     }
   }
   for (const i of [2, 5]) {
-    if (board[i].some((cell) => cell !== "_")) {
+    if ((board[i] || []).some((cell) => cell !== "_")) {
       return false;
     }
   }
   for (const i of [6, 7]) {
-    if (board[i].some((cell) => cell !== "B")) {
+    if ((board[i] || []).some((cell) => cell !== "B")) {
       return false;
     }
   }

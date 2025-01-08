@@ -1,8 +1,8 @@
 import { SerialPort } from "serialport";
-import { Chess, Color, Square } from "chess.js";
+import { Chess, type Color, type Square } from "chess.js";
 import { claimVictory, playMove } from "./lichess";
 import {
-  SquareState,
+  type SquareState,
   indexToSquareName,
   isValidMove,
   squareNameToIndex,
@@ -177,7 +177,7 @@ export class GameHandler {
     }
 
     const candidateMove =
-      Array.from(possibleSources)[0] + Array.from(possibleDestinations)[0];
+      Array.from(possibleSources)[0]! + Array.from(possibleDestinations)[0];
 
     if (!candidateMove) {
       logger.info(" Wait, what ?", { possibleSources, possibleDestinations });

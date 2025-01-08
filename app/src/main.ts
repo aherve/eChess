@@ -1,8 +1,8 @@
 import { SerialPort } from "serialport";
-import { Game } from "./types";
+import type { Game } from "./types";
 import { GameHandler } from "./game-handler";
 import { findAndWatch, streamGame } from "./lichess";
-import { SquareState } from "./utils";
+import type { SquareState } from "./utils";
 import { logger } from "./logger";
 import { Gui } from "./gui";
 
@@ -52,7 +52,8 @@ async function openSerial(): Promise<SerialPort | null> {
       port.path.startsWith("/dev/tty.usbserial") ||
       port.path.startsWith("/dev/cu.usbserial")
   );
-  if (paths.length === 0) {
+  const firstPath = paths[0];
+  if (!firstPath) {
     return null;
   }
   return new Promise((resolve) => {
@@ -60,7 +61,7 @@ async function openSerial(): Promise<SerialPort | null> {
     const port: SerialPort = new SerialPort(
       {
         //path: "/dev/cu.usbserial-110",
-        path: paths[0].path,
+        path: firstPath.path,
         baudRate: 115200,
       },
       (err) => {
@@ -101,15 +102,15 @@ function buildBoard(binaryState: Array<number>): Array<Array<SquareState>> {
     const blackByte = binaryState[i + 1];
 
     for (let j = 0; j < 8; j++) {
-      const whiteBit = whiteByte & (1 << j);
-      const blackBit = blackByte & (1 << j);
+      const whiteBit = whiteByte! & (1 << j);
+      const blackBit = blackByte! & (1 << j);
 
       if (whiteBit) {
-        board[i / 2][j] = "W";
+        board[i / 2]![j] = "W";
       } else if (blackBit) {
-        board[i / 2][j] = "B";
+        board[i / 2]![j] = "B";
       } else {
-        board[i / 2][j] = "_";
+        board[i / 2]![j] = "_";
       }
     }
   }
