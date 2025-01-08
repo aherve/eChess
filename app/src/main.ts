@@ -47,11 +47,13 @@ export async function main() {
 }
 
 async function openSerial(): Promise<SerialPort | null> {
-  const paths = (await SerialPort.list()).filter(
+  const fullList = await SerialPort.list();
+  const paths = fullList.filter(
     (port) =>
       port.path.startsWith("/dev/tty.usbserial") ||
       port.path.startsWith("/dev/cu.usbserial")
   );
+  logger.info("found serial ports", { fullList, paths });
   const firstPath = paths[0];
   if (!firstPath) {
     return null;
