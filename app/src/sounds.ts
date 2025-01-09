@@ -5,17 +5,15 @@ const player = playSound();
 
 export async function playNotifySound() {
   logger.info("Playing notify sound");
-  await genericPlay(
-    `${__dirname}/../sounds/public_sound_standard_GenericNotify.mp3`
-  );
+  await genericPlay(`${__dirname}/../sounds/GenericNotify.mp3`);
 }
 export async function playMoveSound() {
   logger.info("Playing move sound");
-  await genericPlay(`${__dirname}/../sounds/public_sound_standard_Move.mp3`);
+  await genericPlay(`${__dirname}/../sounds/Move.mp3`);
 }
 export async function playCaptureSound() {
   logger.info("Playing capture sound");
-  await genericPlay(`${__dirname}/../sounds/public_sound_standard_Capture.mp3`);
+  await genericPlay(`${__dirname}/../sounds/Capture.mp3`);
 }
 
 export async function playDingSound() {
