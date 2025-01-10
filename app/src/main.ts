@@ -41,8 +41,8 @@ export async function main() {
     }
     await emitLichessEvents(lichessGame.fullId, game, gui);
     logger.info("game ended");
-    game.terminateGame();
     gui.terminateGame();
+    await game.terminateGame();
   }
 }
 

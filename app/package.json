@@ -8,7 +8,8 @@
     "test": "pnpm vitest run --isolate=false",
     "test:watch": "pnpm vitest --isolate=false",
     "build": "rm -rf build && tsc",
-    "compile": "pnpm build"
+    "compile": "pnpm build",
+    "start": "pnpm compile && node build/index.cjs"
   },
   "keywords": [],
   "author": "",

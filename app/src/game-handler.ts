@@ -41,14 +41,13 @@ export class GameHandler {
     this.myColor = color;
     this.lichessGameId = gameId;
     this.lichessMoves = [];
-    this.litSquares = new Set<Square>();
+    await this.startSequence();
     return this.reconcile();
   }
 
-  public terminateGame() {
+  public async terminateGame() {
     this.lichessGameId = undefined;
-    this.litSquares = new Set<Square>();
-    this.sendLEDCommandNow();
+    await this.endSequence();
   }
 
   public async claimVictory() {
@@ -70,6 +69,43 @@ export class GameHandler {
     logger.info("updating lichess moves", moves);
     this.lichessMoves = moves.filter((m) => m.length);
     this.reconcile();
+  }
+
+  private async startSequence() {
+    const period = 40;
+    let prev: Square | null = null;
+    let curr: Square | null = null;
+    for (let i = 2; i < 6; i++) {
+      for (let j = 0; j < 8; j++) {
+        prev = curr;
+        curr = indexToSquareName(i, j);
+        this.litSquares = new Set([prev, curr].filter((x): x is Square => !!x));
+        this.sendLEDCommandNow();
+        await new Promise((resolve) => setTimeout(resolve, period));
+      }
+      i++;
+      for (let j = 7; j >= 0; j--) {
+        prev = curr;
+        curr = indexToSquareName(i, j);
+        this.litSquares = new Set([prev, curr].filter((x): x is Square => !!x));
+        this.sendLEDCommandNow();
+        await new Promise((resolve) => setTimeout(resolve, period));
+      }
+    }
+    this.litSquares = new Set();
+    this.sendLEDCommandNow();
+  }
+
+  private async endSequence() {
+    const period = 300;
+    for (let i = 0; i < 3; i++) {
+      this.litSquares = new Set(["d4", "d5", "e4", "e5"]);
+      this.sendLEDCommandNow();
+      await new Promise((resolve) => setTimeout(resolve, period));
+      this.litSquares = new Set([]);
+      this.sendLEDCommandNow();
+      await new Promise((resolve) => setTimeout(resolve, period));
+    }
   }
 
   private async sendLEDCommand() {
