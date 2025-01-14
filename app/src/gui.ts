@@ -155,7 +155,7 @@ export class Gui {
       return;
     }
     const opponentColor = this.color === "white" ? "black" : "white";
-    this.grid.set(0, 0, 5, 10, blessed.box, {
+    this.grid.set(0, 0, 4, 10, blessed.box, {
       align: "center",
       content:
         `${opponentColor}: ${this.opponentName}` +
@@ -166,7 +166,7 @@ export class Gui {
         }) +
         (this.isMyTurn ? "  " : " \u{1F7E2}"),
     });
-    this.grid.set(5, 0, 5, 10, blessed.box, {
+    this.grid.set(4, 0, 4, 10, blessed.box, {
       align: "center",
       content:
         `You play ${this.color}` +
@@ -174,7 +174,7 @@ export class Gui {
         this.getPrettyTime({ forColor: this.color, isPlaying: this.isMyTurn }) +
         (this.isMyTurn ? " \u{1F7E2}" : "  "),
     });
-    this.grid.set(10, 0, 2, 10, blessed.box, {
+    this.grid.set(8, 0, 4, 10, blessed.box, {
       align: "left",
       content: this.chatMessages.slice(-4).join("\n"),
     });
@@ -182,7 +182,7 @@ export class Gui {
       top: "center",
       align: "center",
       left: "center",
-      content: "Resign 🏁",
+      content: "❌",
       mouse: true,
     });
     resign.on(
@@ -194,7 +194,7 @@ export class Gui {
       top: "center",
       align: "center",
       left: "center",
-      content: "Abort ❌",
+      content: "🚫",
       mouse: true,
     });
     abort.on("press", () => this.gameId && abortGame({ gameId: this.gameId }));
@@ -203,7 +203,7 @@ export class Gui {
       top: "center",
       align: "center",
       left: "center",
-      content: "Draw ½",
+      content: "½",
       mouse: true,
     });
     draw.on("press", () => this.gameId && drawGame({ gameId: this.gameId }));
