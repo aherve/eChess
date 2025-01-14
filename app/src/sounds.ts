@@ -2,6 +2,7 @@ import { logger } from "./logger";
 import playSound from "play-sound";
 
 const player = playSound();
+const SOUND_ENABLED = false;
 
 export async function playNotifySound() {
   logger.info("Playing notify sound");
@@ -24,6 +25,9 @@ export async function playDingSound() {
 }
 
 async function genericPlay(path: string): Promise<void> {
+  if (!SOUND_ENABLED) {
+    return;
+  }
   return new Promise((resolve, reject) => {
     player.play(path, (err) => {
       if (err) {
