@@ -249,8 +249,8 @@ export class Gui {
         parent: box,
         top: "center",
         left: "center",
-        width: "80%",
-        height: "80%",
+        width: "70%",
+        height: "70%",
         content: buildAsciiBoard(this.board),
       });
     } else {
