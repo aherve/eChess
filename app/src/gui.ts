@@ -242,15 +242,15 @@ export class Gui {
       if (this.lastGameResult) {
         box.content += `Game ${this.lastGameResult}!` + "\n";
       }
-      box.content += "Please place the pieces in the starting position.";
+      box.content += "Current board position";
 
       blessed.box({
         align: "center",
         parent: box,
         top: "center",
         left: "center",
-        width: "50%",
-        height: "50%",
+        width: "80%",
+        height: "80%",
         content: buildAsciiBoard(this.board),
       });
     } else {
