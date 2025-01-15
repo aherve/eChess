@@ -258,7 +258,7 @@ export class Gui {
       const rapid = this.grid.set(4, 1, 5, 5, blessed.button, {
         top: "center",
         align: "center",
-        content: "Create 15 | 10 game",
+        content: "15 | 10",
         left: "center",
         mouse: true,
       });
@@ -267,7 +267,7 @@ export class Gui {
       const classical = this.grid.set(4, 6, 5, 5, blessed.button, {
         top: "center",
         align: "center",
-        content: "Create 30 | 20 game",
+        content: "30 | 20",
         left: "center",
         mouse: true,
       });
