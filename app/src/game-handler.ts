@@ -60,6 +60,7 @@ export class GameHandler {
   }
 
   public async updateArduinoBoard(newBoard: Array<Array<SquareState>>) {
+    logger.info("piece moved");
     this.arduinoReady = true;
     this.arduinoBoard = newBoard;
     this.reconcile();
@@ -176,6 +177,7 @@ export class GameHandler {
           const lichessSquareState = lichessState.get(square) ?? "_";
           const arduinoSquareState = this.arduinoBoard?.[i]?.[j];
           if (lichessSquareState !== arduinoSquareState) {
+            logger.info("LED state mismatch", { square });
             lit.add(square);
 
             if (lichessSquareState && arduinoSquareState === "_") {
