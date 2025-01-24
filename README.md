@@ -9,7 +9,7 @@ _Demo game against a lichess bot. The phone showcases the game for demo purposes
 ## How it works
 
 - The board is equipped with 64 hall effect sensors, and 64 LEDs.
-- The board can communicate via usb to a nodejs program that runs on a laptop
+- The board can communicate via usb to a nodejs program that runs on an embedded raspberry PI with touchscreen
 - The program can communicate with both lichess API and the physical board
 
 ![overview](assets/project_overview.png)
@@ -73,6 +73,10 @@ _internal view of the board_
 
 ![pcb closeup](assets/pcb_closeup.jpg)
 _closeup of the pcb after installation_
+
+![extension1](assets/extension1.jpg)
+
+![extension2](assets/extension2.jpg)
 
 ## Microconctroller setup
 
