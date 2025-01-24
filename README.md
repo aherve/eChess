@@ -128,5 +128,3 @@ The code can be found in [the app directory](app/)
 I've been playing with this board for quite a while now, and it has been a tremendous experience so far. It's definitely not suited for fast time controls, but lichess only provide their real-time API for rapid & classical time-controls anyway (has to do with anti-cheating measures I believe).
 
 Playing lichess games while looking at a physical board is a delight, and has become my main way of playing chess at home.
-
-The only missing feature is a clock display on the board. Since I have to plug the board a laptop anyway, I usually look at the computer's screen when I want to see the clock. Not ideal, but good enough that I didn't bother implementing it yet. Maybe someday ¯\\\_(ツ)\_/¯
