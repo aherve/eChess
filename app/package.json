@@ -9,7 +9,8 @@
     "test:watch": "pnpm vitest --isolate=false",
     "build": "rm -rf build && tsc",
     "compile": "pnpm build",
-    "start": "pnpm compile && node build/index.cjs"
+    "start": "pnpm compile && node build/index.cjs",
+    "restart": "pnpm build && systemctl --user restart echess-launcher.service"
   },
   "keywords": [],
   "author": "",
