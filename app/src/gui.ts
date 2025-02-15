@@ -5,13 +5,6 @@ import { asciiPlug, asciiUsb } from "./ascii-art";
 import { abortGame, createSeek, drawGame, resignGame } from "./lichess";
 import { logger } from "./logger";
 import type { ChatLineEvent, Game, GameStateEvent } from "./types";
-import {
-  playCaptureSound,
-  playDingSound,
-  playMoveSound,
-  playNotifySound,
-} from "./sounds";
-import { Chess } from "chess.js";
 
 type ClockAnchor = {
   wtime: number;
@@ -53,19 +46,16 @@ export class Gui {
     this.opponentName = null;
     this.abortSeek();
     this.chatMessages = [];
-    playNotifySound();
   }
 
   public setBoardStatus(hasBoard: boolean) {
     this.hasBoard = hasBoard;
   }
   public addChatLine(event: ChatLineEvent) {
-    playDingSound();
     this.chatMessages.push(`<${event.username}>:${event.text}`);
   }
 
   public startGame(game: Game) {
-    playNotifySound();
     this.lastGameResult = null;
     this.abortSeek();
     this.color = game.color;
@@ -75,7 +65,6 @@ export class Gui {
   }
 
   public updateFromLichess(event: GameStateEvent) {
-    this.playGameSound(event);
     if (event.winner) {
       this.lastGameResult = event.winner === this.color ? "won" : "lost";
     }
@@ -92,43 +81,6 @@ export class Gui {
 
   public updateBoard(board: Array<Array<SquareState>>) {
     this.board = board;
-  }
-
-  private async playGameSound(event: GameStateEvent) {
-    switch (event.status) {
-      case "mate":
-      case "resign":
-      case "draw":
-      case "timeout":
-      case "aborted":
-      case "nostart":
-      case "outoftime":
-      case "cheat":
-      case "unknownfinish":
-      case "stalemate":
-      case "created":
-        return playNotifySound();
-      case "started": {
-        const lichessMoves = event.moves;
-        if (!lichessMoves.length) {
-          return playNotifySound();
-        }
-        const g = new Chess();
-        for (const move of lichessMoves.slice(0, -1)) {
-          g.move(move);
-        }
-        const lastLichessMove = lichessMoves[lichessMoves.length - 1];
-        if (!lastLichessMove) {
-          return;
-        }
-        const lastMove = g.move(lastLichessMove);
-        if (lastMove.captured) {
-          return playCaptureSound();
-        } else {
-          return playMoveSound();
-        }
-      }
-    }
   }
 
   private async autoRefresh() {
