@@ -255,7 +255,7 @@ export class Gui {
       });
     } else {
       box.content = "Ready for a new game";
-      const rapid1 = this.grid.set(1, 1, 5, 5, blessed.button, {
+      const rapid1 = this.grid.set(2, 1, 5, 5, blessed.button, {
         top: "center",
         align: "center",
         content: "15 | 10",
@@ -264,32 +264,32 @@ export class Gui {
       });
       rapid1.on("press", () => this.seekGame({ time: 15, increment: 10 }));
 
-      const classical1 = this.grid.set(1, 6, 5, 5, blessed.button, {
-        top: "center",
-        align: "center",
-        content: "30 | 20",
-        left: "center",
-        mouse: true,
-      });
-      classical1.on("press", () => this.seekGame({ time: 30, increment: 20 }));
-
-      const class2 = this.grid.set(6, 1, 5, 5, blessed.button, {
-        top: "center",
-        align: "center",
-        content: "10 | 30",
-        left: "center",
-        mouse: true,
-      });
-      class2.on("press", () => this.seekGame({ time: 10, increment: 30 }));
-
-      const class3 = this.grid.set(6, 6, 5, 5, blessed.button, {
+      const classical1 = this.grid.set(2, 6, 5, 5, blessed.button, {
         top: "center",
         align: "center",
         content: "15 | 30",
         left: "center",
         mouse: true,
       });
-      class3.on("press", () => this.seekGame({ time: 15, increment: 30 }));
+      classical1.on("press", () => this.seekGame({ time: 15, increment: 30 }));
+
+      const class2 = this.grid.set(7, 1, 5, 5, blessed.button, {
+        top: "center",
+        align: "center",
+        content: "30 | 20",
+        left: "center",
+        mouse: true,
+      });
+      class2.on("press", () => this.seekGame({ time: 30, increment: 20 }));
+
+      const class3 = this.grid.set(7, 6, 5, 5, blessed.button, {
+        top: "center",
+        align: "center",
+        content: "30 | 30",
+        left: "center",
+        mouse: true,
+      });
+      class3.on("press", () => this.seekGame({ time: 30, increment: 30 }));
     }
 
     this.screen.render();
