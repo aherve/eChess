@@ -20,11 +20,11 @@ func main() {
 		Game:  lichess.NewGame(),
 	}
 
-	boardEventsChan := make(chan BoardEvent)
+	boardStateChan := make(chan Squares)
 
 	for !state.Board.Connected {
 		log.Println("Waiting for a board connection...")
-		state.Board.Connect(boardEventsChan)
+		state.Board.Connect(boardStateChan)
 		time.Sleep(500 * time.Millisecond)
 	}
 
@@ -37,7 +37,7 @@ func main() {
 		}
 
 		if game.GameId != "" {
-			handleGame(game, boardEventsChan)
+			handleGame(game, boardStateChan)
 			game = lichess.NewGame()
 			continue
 		}

@@ -136,7 +136,7 @@ export function getLatestMessage(dataBuffer: number[]): number[] | null {
         return null;
       }
       const latestMessage = dataBuffer.slice(i - 18, i - 2);
-      dataBuffer.splice(0, i + 1);
+      dataBuffer.splice(0, i + 1); // delete i+1 elements, starting from 0
       return latestMessage;
     }
   }
