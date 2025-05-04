@@ -177,7 +177,6 @@ func StreamGame(gameId string, chans *LichessEventChans) {
 				log.Printf("Error unmarshalling game state event: %v", err)
 				continue
 			}
-			gs.transformMoves()
 			chans.GameStateChan <- gs
 			continue
 		case "gameFull":
@@ -187,7 +186,6 @@ func StreamGame(gameId string, chans *LichessEventChans) {
 				log.Printf("Error unmarshalling game full event: %v", err)
 				continue
 			}
-			gameFullEvent.State.transformMoves()
 			chans.GameStateChan <- gameFullEvent.State
 			continue
 		default:

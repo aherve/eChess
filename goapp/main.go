@@ -6,24 +6,29 @@ import (
 	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
-	"github.com/rivo/tview"
 )
+
+type MainState struct {
+	Board *Board
+	Game  *lichess.Game
+}
 
 func main() {
 
-	app := tview.NewApplication()
-	button := tview.NewButton("Hit Enter to close").SetSelectedFunc(func() {
-		app.Stop()
-	})
-	button.SetBorder(true).SetRect(0, 0, 22, 3)
-	if err := app.SetRoot(button, false).EnableMouse(true).Run(); err != nil {
-		panic(err)
+	state := MainState{
+		Board: NewBoard(),
+		Game:  lichess.NewGame(),
 	}
 
-	params := make(map[string]string)
-	params["nb"] = "1"
+	boardEventsChan := make(chan BoardEvent)
 
-	game := lichess.NewGame()
+	for !state.Board.Connected {
+		log.Println("Waiting for a board connection...")
+		state.Board.Connect(boardEventsChan)
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	game := state.Game
 	for game.GameId == "" {
 
 		err := lichess.FindPlayingGame(game)
@@ -32,7 +37,7 @@ func main() {
 		}
 
 		if game.GameId != "" {
-			handleGame(game)
+			handleGame(game, boardEventsChan)
 			game = lichess.NewGame()
 			continue
 		}
