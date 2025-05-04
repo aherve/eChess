@@ -15,6 +15,10 @@ type secretFile struct {
 	ApiToken string `json:"LICHESS_API_TOKEN"`
 }
 
+type withType struct {
+	Type string `json:"type"`
+}
+
 func ResignGame(gameId string) {
 	params := make(map[string]string)
 	body, err := lichessFetch(fmt.Sprintf("board/game/%s/resign", gameId), params, "POST")
@@ -25,7 +29,7 @@ func ResignGame(gameId string) {
 	}
 }
 
-func FindPlayingGame(lichessGame *LichessGame) error {
+func FindPlayingGame(lichessGame *Game) error {
 	params := make(map[string]string)
 	params["nb"] = "1"
 	body, err := lichessFetch("account/playing", params, "GET")
@@ -43,7 +47,7 @@ func FindPlayingGame(lichessGame *LichessGame) error {
 	if len(response.NowPlaying) > 0 {
 		*lichessGame = response.NowPlaying[0]
 	} else {
-		*lichessGame = LichessGame{}
+		*lichessGame = Game{}
 	}
 
 	return nil
@@ -125,7 +129,7 @@ func lichessFetch(path string, params map[string]string, method string) (io.Read
 	return resp.Body, nil
 }
 
-func StreamGame(gameId string, eventChan chan LichessEvent) {
+func StreamGame(gameId string, chans *LichessEventChans) {
 	body, err := lichessFetch(fmt.Sprintf("board/game/stream/%s", gameId), nil, "GET")
 	if err != nil {
 		log.Fatalf("Error streaming game:", err)
@@ -140,38 +144,41 @@ func StreamGame(gameId string, eventChan chan LichessEvent) {
 			continue
 		}
 
-		var event LichessEvent
-		err := json.Unmarshal(line, &event)
+		var withType withType
+		err := json.Unmarshal(line, &withType)
 		if err != nil {
 			log.Printf("Error unmarshalling chat line: %v", err)
 			continue
 		}
 
-		switch event.Type {
+		switch withType.Type {
 		case "chatLine":
-			err := json.Unmarshal(line, &event.ChatLine)
+			var chatLine ChatLineEvent
+			err := json.Unmarshal(line, &chatLine)
 			if err != nil {
 				log.Printf("Error unmarshalling chat line: %v", err)
 				continue
 			}
-			eventChan <- event
+			chans.ChatChan <- chatLine
 			continue
 		case "opponentGone":
-			err := json.Unmarshal(line, &event.OpponentGone)
+			var oppGone OpponentGoneEvent
+			err := json.Unmarshal(line, &oppGone)
 			if err != nil {
 				log.Printf("Error unmarshalling opponent gone event: %v", err)
 				continue
 			}
-			eventChan <- event
+			chans.OpponentGoneChan <- oppGone
 			continue
 		case "gameState":
-			err := json.Unmarshal(line, &event.GameState)
+			var gs GameStateEvent
+			err := json.Unmarshal(line, &gs)
 			if err != nil {
 				log.Printf("Error unmarshalling game state event: %v", err)
 				continue
 			}
-			event.GameState.transformMoves()
-			eventChan <- event
+			gs.transformMoves()
+			chans.GameStateChan <- gs
 			continue
 		case "gameFull":
 			var gameFullEvent GameFullEvent
@@ -180,13 +187,11 @@ func StreamGame(gameId string, eventChan chan LichessEvent) {
 				log.Printf("Error unmarshalling game full event: %v", err)
 				continue
 			}
-			event.GameState = gameFullEvent.State
-			event.Type = "gameState"
-			event.GameState.transformMoves()
-			eventChan <- event
+			gameFullEvent.State.transformMoves()
+			chans.GameStateChan <- gameFullEvent.State
 			continue
 		default:
-			log.Printf("Unknown event type: %s", event.Type)
+			log.Printf("Unknown event type: %s", withType.Type)
 		}
 
 	}
@@ -196,6 +201,13 @@ func StreamGame(gameId string, eventChan chan LichessEvent) {
 		return
 	}
 
-	log.Println("Stream closed")
+	chans.GameEnded <- true
 
+}
+
+func ClaimVictory(gameId string) {
+	_, err := lichessFetch(fmt.Sprintf("board/game/%s/claim-victory", gameId), nil, "POST")
+	if err != nil {
+		log.Printf("Error claiming victory: %v", err)
+	}
 }

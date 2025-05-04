@@ -1,9 +1,11 @@
 package lichess
 
-import "strings"
+import (
+	"strings"
+)
 
 type FindPlayingGameResponse struct {
-	NowPlaying []LichessGame `json:"nowPlaying"`
+	NowPlaying []Game `json:"nowPlaying"`
 }
 
 type Opponent struct {
@@ -12,12 +14,18 @@ type Opponent struct {
 	Rating   int    `json:"rating"`
 }
 
-type LichessGame struct {
+type Game struct {
 	FullID   string   `json:"fullId"`
 	GameId   string   `json:"gameId"`
 	Color    string   `json:"color"` // "white" or "black"
 	Fen      string   `json:"fen"`
 	Opponent Opponent `json:"opponent"`
+}
+
+func NewGame() *Game {
+	return &Game{
+		Opponent: Opponent{},
+	}
 }
 
 type GameStateEvent struct {
@@ -49,7 +57,7 @@ type ChatLineEvent struct {
 type OpponentGoneEvent struct {
 	Type              string `json:"type"`
 	Gone              bool   `json:"gone"`
-	claimWinInSeconds int    `json:"claimWinInSeconds"`
+	ClaimWinInSeconds int    `json:"claimWinInSeconds"`
 }
 
 type GameFullEvent struct {
@@ -58,9 +66,18 @@ type GameFullEvent struct {
 	Color string         `json:"color"`
 }
 
-type LichessEvent struct {
-	Type         string `json:"type"`
-	ChatLine     ChatLineEvent
-	OpponentGone OpponentGoneEvent
-	GameState    GameStateEvent
+type LichessEventChans struct {
+	ChatChan         chan ChatLineEvent
+	OpponentGoneChan chan OpponentGoneEvent
+	GameStateChan    chan GameStateEvent
+	GameEnded        chan bool
+}
+
+func NewLichessEventChans() *LichessEventChans {
+	return &LichessEventChans{
+		ChatChan:         make(chan ChatLineEvent),
+		OpponentGoneChan: make(chan OpponentGoneEvent),
+		GameStateChan:    make(chan GameStateEvent),
+		GameEnded:        make(chan bool),
+	}
 }

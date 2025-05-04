@@ -2,34 +2,45 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
+	"github.com/rivo/tview"
 )
 
 func main() {
-	params := make(map[string]string)
-	params["nb"] = "1"
 
-	var game lichess.LichessGame
-	err := lichess.FindPlayingGame(&game)
-	if err != nil {
+	app := tview.NewApplication()
+	button := tview.NewButton("Hit Enter to close").SetSelectedFunc(func() {
+		app.Stop()
+	})
+	button.SetBorder(true).SetRect(0, 0, 22, 3)
+	if err := app.SetRoot(button, false).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 
-	fmt.Println("Game ID:", game.GameId, "You are playing as", game.Color)
+	params := make(map[string]string)
+	params["nb"] = "1"
 
-	evtChan := make(chan lichess.LichessEvent)
-	if game.GameId != "" {
-		fmt.Println("starting streaming game", game.GameId, " You play as ", game.Color)
-		go lichess.StreamGame(game.GameId, evtChan)
-	}
+	game := lichess.NewGame()
+	for game.GameId == "" {
 
-	for {
-		select {
-		case evt := <-evtChan:
-			fmt.Printf("Event: %+v\n", evt)
-			fmt.Println("")
+		err := lichess.FindPlayingGame(game)
+		if err != nil {
+			log.Fatalf("Error finding game: %v", err)
+		}
+
+		if game.GameId != "" {
+			handleGame(game)
+			game = lichess.NewGame()
+			continue
+		}
+
+		if game.GameId == "" {
+			fmt.Println("No game found. Will try again in 3 seconds...")
+			time.Sleep(3 * time.Second)
+			continue
 		}
 	}
-
 }
