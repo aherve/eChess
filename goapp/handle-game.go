@@ -7,7 +7,9 @@ import (
 	"github.com/aherve/eChess/goapp/lichess"
 )
 
-func handleGame(game *lichess.Game, boardStateChan chan Squares) {
+func handleGame(state MainState, boardStateChan chan BoardState) {
+	game := state.Game
+	board := state.Board
 
 	fmt.Println("Game ID:", game.GameId, "You are playing as", game.Color)
 
@@ -32,8 +34,9 @@ func handleGame(game *lichess.Game, boardStateChan chan Squares) {
 		case <-chans.GameEnded:
 			log.Printf("Game ended")
 			return
-		case bEvt := <-boardStateChan:
-			log.Println("Board event received:", bEvt)
+		case bdEvt := <-boardStateChan:
+			log.Println("Board event received:", bdEvt)
+			board.Update(bdEvt)
 		}
 	}
 }

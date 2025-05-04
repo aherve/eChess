@@ -11,12 +11,12 @@ import (
 )
 
 type BoardEvent = [16]byte
-type Squares = [8][8]chess.Color
+type BoardState = [8][8]chess.Color
 
 type Board struct {
 	Connected bool
 	Port      serial.Port
-	Squares   Squares
+	State     BoardState
 }
 
 func NewBoard() *Board {
@@ -25,8 +25,16 @@ func NewBoard() *Board {
 	}
 }
 
-func buildSquares(evt BoardEvent) Squares {
-	board := buildEmptyBoard()
+func (board *Board) Update(squares BoardState) {
+	for i := range squares {
+		for j := range squares[i] {
+			board.State[i][j] = squares[i][j]
+		}
+	}
+}
+
+func buildSquares(evt BoardEvent) BoardState {
+	board := BoardState{}
 	for i := 0; i < 16; i += 2 {
 		whiteByte := evt[i]
 		blackByte := evt[i+1]
@@ -40,25 +48,15 @@ func buildSquares(evt BoardEvent) Squares {
 				board[i/2][j] = chess.White
 			} else if blackBit > 0 {
 				board[i/2][j] = chess.Black
+			} else {
+				board[i/2][j] = chess.NoColor
 			}
 		}
 	}
 	return board
 }
 
-func buildEmptyBoard() Squares {
-	var squares Squares
-	for i := range 8 {
-		thisRow := [8]chess.Color{}
-		for j := range 8 {
-			thisRow[j] = chess.NoColor
-		}
-		squares[i] = thisRow
-	}
-	return squares
-}
-
-func (board *Board) StreamEvents(c chan Squares) {
+func (board *Board) StreamEvents(c chan BoardState) {
 	if !board.Connected {
 		log.Fatal("Board is not connected!")
 	}
@@ -100,7 +98,7 @@ func (board *Board) StreamEvents(c chan Squares) {
 	}
 }
 
-func (board *Board) Connect(c chan Squares) {
+func (board *Board) Connect(c chan BoardState) {
 	okPortPrefixes := []string{"/dev/ttyUSB0", "/dev/tty.usbserial", "/dev/cu.usbserial"}
 
 	ports, err := serial.GetPortsList()
