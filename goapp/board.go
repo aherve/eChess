@@ -6,11 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/notnil/chess"
 	"go.bug.st/serial"
 )
 
 type BoardEvent = [16]byte
-type Squares = [8][8]string
+type Squares = [8][8]chess.Color
 
 type Board struct {
 	Connected bool
@@ -30,15 +31,15 @@ func buildSquares(evt BoardEvent) Squares {
 		whiteByte := evt[i]
 		blackByte := evt[i+1]
 
-		for j := 0; j < 8; j++ {
+		for j := range 8 {
 
 			whiteBit := whiteByte & (1 << j)
 			blackBit := blackByte & (1 << j)
 
 			if whiteBit > 0 {
-				board[i/2][j] = "W"
+				board[i/2][j] = chess.White
 			} else if blackBit > 0 {
-				board[i/2][j] = "B"
+				board[i/2][j] = chess.Black
 			}
 		}
 	}
@@ -47,10 +48,10 @@ func buildSquares(evt BoardEvent) Squares {
 
 func buildEmptyBoard() Squares {
 	var squares Squares
-	for i := 0; i < 8; i++ {
-		thisRow := [8]string{}
-		for j := 0; j < 8; j++ {
-			thisRow[j] = "_"
+	for i := range 8 {
+		thisRow := [8]chess.Color{}
+		for j := range 8 {
+			thisRow[j] = chess.NoColor
 		}
 		squares[i] = thisRow
 	}

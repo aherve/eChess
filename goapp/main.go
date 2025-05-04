@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
+	"github.com/notnil/chess"
 )
 
 type MainState struct {
@@ -14,6 +15,15 @@ type MainState struct {
 }
 
 func main() {
+
+	g := chess.NewGame(chess.UseNotation(chess.UCINotation{}))
+	dbg := g.Position().Board().Piece(chess.E4).Color() == chess.White
+	log.Println("Debug", dbg)
+	if err := g.MoveStr("e2e4"); err != nil {
+		log.Fatalf("Error making move: %v", err)
+	}
+	dbg = g.Position().Board().Piece(chess.E4).Color() == chess.White
+	log.Println("Debug", dbg)
 
 	state := MainState{
 		Board: NewBoard(),
