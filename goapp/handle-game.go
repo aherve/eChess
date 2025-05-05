@@ -40,12 +40,52 @@ func handleGame(state MainState, boardStateChan chan BoardState) {
 			resetLitSquares(state)
 			return
 		case bdEvt := <-boardStateChan:
-			log.Println("Board event received")
 			board.Update(bdEvt)
 			updateLitSquares(state)
 			board.sendLEDCommand(state.LitSquares)
+			findValidMove(state)
 		}
 	}
+}
+
+func findValidMove(state MainState) string {
+	// must have 2 changes exactly
+	if len(state.LitSquares) != 2 {
+		return ""
+	}
+
+	source := ""
+	dest := ""
+	for k := range state.LitSquares {
+		i, j := getCoordinatesFromIndex(k)
+		boardColor := state.Board.State[i][j]
+
+		// piece missing => has to be the source square
+		if boardColor == chess.NoColor {
+			source = chess.NewSquare(chess.File(i), chess.Rank(j)).String()
+		} else {
+			// else it's a destination
+			dest = chess.NewSquare(chess.File(i), chess.Rank(j)).String()
+		}
+	}
+
+	// If we managed to define one source and one dest, then we assert whether the move is valid or not
+	if source == "" || dest == "" {
+		return ""
+	}
+
+	move := source + dest
+
+	g := NewChessGameFromMoves(state.Game.Moves)
+	invalid := g.MoveStr(move)
+	if invalid != nil {
+		log.Printf("invalid move %s", move)
+		return ""
+	}
+
+	log.Printf("Found valid move %s", move)
+	return move
+
 }
 
 func resetLitSquares(state MainState) {
@@ -54,6 +94,7 @@ func resetLitSquares(state MainState) {
 	}
 	state.Board.sendLEDCommand(state.LitSquares)
 }
+
 func updateLitSquares(state MainState) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
