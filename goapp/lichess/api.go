@@ -72,7 +72,7 @@ func streamResponse(ctx context.Context, respBody io.ReadCloser) {
 				return
 			}
 			if err == io.EOF {
-				log.Println("End of stream")
+				log.Println("Seek response ended")
 				return
 			}
 

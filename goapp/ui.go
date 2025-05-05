@@ -90,11 +90,11 @@ func NewUIState() *UIState {
 }
 
 func runUI(state MainState) {
-	go uiAction(state)
+	go emitActions(state)
 
 	/*
 	 *go func() {
-	 *  state.UIState.Output <- Seek105
+	 *  state.UIState.Output <- Seek3030
 	 *  time.Sleep(500 * time.Millisecond)
 	 *  state.UIState.Output <- CancelSeek
 	 *}()
@@ -104,12 +104,15 @@ func runUI(state MainState) {
 		select {
 		case input := <-state.UIState.Input:
 			log.Println("UI Input:", input)
+			if input == GameStarted {
+				state.UIState.Output <- CancelSeek
+			}
 		}
 	}
 
 }
 
-func uiAction(state MainState) {
+func emitActions(state MainState) {
 
 	for {
 		select {
@@ -126,6 +129,7 @@ func uiAction(state MainState) {
 			case Seek3030:
 				state.UIState.cancelSeek = lichess.CreateSeek("30", "30")
 			case CancelSeek:
+				log.Println("Canceling seek")
 				if state.UIState.cancelSeek != nil {
 					(*state.UIState.cancelSeek)()
 					state.UIState.cancelSeek = nil

@@ -41,6 +41,7 @@ func handleGame(state MainState) {
 	log.Println("Game ID:", game.GameId, "You are playing as", game.Color)
 
 	state.UIState.Input <- GameStarted
+	PlayStartSequence(state)
 
 	chans := lichess.NewLichessEventChans()
 	if game.GameId != "" {
@@ -64,6 +65,7 @@ func handleGame(state MainState) {
 			log.Println("Game updated", game.Moves)
 		case <-chans.GameEnded:
 			log.Printf("Game ended")
+			state.PlayEndSequence()
 
 			if game.Winner == game.Color {
 				state.UIState.Input <- GameWon
@@ -232,6 +234,67 @@ func PlayWithDelay(state MainState, move string, allowSchedule bool) {
 			state.CandidateMove.Move = ""
 			state.CandidateMove.IssuedAt = time.Now()
 		}
+	}
+
+}
+
+func PlayStartSequence(state MainState) {
+
+	period := 20 * time.Millisecond
+	seq := []int8{
+		int8(chess.E4),
+		int8(chess.E5),
+		int8(chess.D5),
+		int8(chess.D4),
+		int8(chess.D3),
+		int8(chess.E3),
+		int8(chess.F3),
+		int8(chess.F4),
+		int8(chess.F5),
+		int8(chess.F6),
+		int8(chess.E6),
+		int8(chess.D6),
+		int8(chess.C6),
+		int8(chess.C5),
+		int8(chess.C4),
+		int8(chess.C3),
+	}
+
+	first := map[int8]bool{}
+	first[seq[0]] = true
+	state.Board.sendLEDCommand(first)
+	time.Sleep(period)
+	for i := 1; i < len(seq); i++ {
+		local := map[int8]bool{}
+		local[seq[i-1]] = true
+		local[seq[i]] = true
+		state.Board.sendLEDCommand(local)
+		time.Sleep(period)
+	}
+
+	last := map[int8]bool{}
+	last[seq[len(seq)-1]] = true
+	state.Board.sendLEDCommand(first)
+	time.Sleep(period)
+
+	state.Board.sendLEDCommand(state.LitSquares)
+}
+
+func (state MainState) PlayEndSequence() {
+	period := 300 * time.Millisecond
+	localEmptyState := map[int8]bool{}
+
+	localLitState := map[int8]bool{}
+	localLitState[int8(chess.E4)] = true
+	localLitState[int8(chess.E5)] = true
+	localLitState[int8(chess.D4)] = true
+	localLitState[int8(chess.D5)] = true
+
+	for range 3 {
+		state.Board.sendLEDCommand(localLitState)
+		time.Sleep(period)
+		state.Board.sendLEDCommand(localEmptyState)
+		time.Sleep(period)
 	}
 
 }
