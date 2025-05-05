@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"strings"
 	"sync"
@@ -61,7 +60,7 @@ func buildSquares(evt BoardEvent) BoardState {
 	return board
 }
 
-func (board *Board) StreamEvents(c chan BoardState) {
+func (board *Board) Listen(c chan bool) {
 	if !board.Connected {
 		log.Fatal("Board is not connected!")
 	}
@@ -90,7 +89,10 @@ func (board *Board) StreamEvents(c chan BoardState) {
 				msg := BoardEvent{}
 				copy(msg[:], buff[i-18:i-2])
 				squares := buildSquares(msg)
-				c <- squares
+
+				board.Update(squares)
+
+				c <- true
 				if len(buff) > i+1 {
 					buff = buff[i+1:]
 				} else {
@@ -103,7 +105,7 @@ func (board *Board) StreamEvents(c chan BoardState) {
 	}
 }
 
-func (board *Board) Connect(c chan BoardState) {
+func (board *Board) Connect(c chan bool) {
 	board.mu.Lock()
 	defer board.mu.Unlock()
 
@@ -120,7 +122,7 @@ func (board *Board) Connect(c chan BoardState) {
 
 		for _, pref := range okPortPrefixes {
 			if strings.HasPrefix(portName, pref) {
-				fmt.Println("Connecting to board on port:", portName)
+				log.Println("Connecting to board on port:", portName)
 
 				port, err := serial.Open(portName, &serial.Mode{
 					BaudRate: 115200,
@@ -132,7 +134,7 @@ func (board *Board) Connect(c chan BoardState) {
 				board.Connected = true
 				board.Port = port
 				log.Println("Connected to board on port", portName)
-				go board.StreamEvents(c)
+				go board.Listen(c)
 				return
 			}
 		}

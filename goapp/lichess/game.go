@@ -6,10 +6,10 @@ import (
 )
 
 type Game struct {
-	FullID   string   `json:"fullId"`
-	GameId   string   `json:"gameId"`
-	Color    string   `json:"color"` // "white" or "black"
-	Fen      string   `json:"fen"`
+	FullID string `json:"fullId"`
+	GameId string `json:"gameId"`
+	Color  string `json:"color"` // "white" or "black"
+	//Fen      string   `json:"fen"`
 	Opponent Opponent `json:"opponent"`
 	Wtime    int      `json:"-"`
 	Btime    int      `json:"-"`
@@ -23,6 +23,19 @@ func NewGame() *Game {
 	}
 }
 
+func (g *Game) Reset() {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	g.FullID = ""
+	g.GameId = ""
+	g.Color = ""
+	g.Opponent = Opponent{}
+	g.Wtime = -1
+	g.Btime = -1
+	g.Moves = []string{}
+}
+
 func (game *Game) Update(newState GameStateEvent) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
@@ -30,5 +43,14 @@ func (game *Game) Update(newState GameStateEvent) {
 	game.Wtime = newState.Wtime
 	game.Btime = newState.Btime
 
-	game.Moves = strings.Split(newState.Moves, " ")
+	newMoves := []string{}
+	rawMoves := strings.SplitSeq(newState.Moves, " ")
+
+	for move := range rawMoves {
+		move = strings.TrimSpace(move)
+		if move != "" {
+			newMoves = append(newMoves, move)
+		}
+	}
+	game.Moves = newMoves
 }

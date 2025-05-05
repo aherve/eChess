@@ -1,42 +1,32 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"os"
 	"time"
-
-	"github.com/aherve/eChess/goapp/lichess"
 )
 
 func main() {
+	// Open or create the log file
+	f, err := os.OpenFile("/tmp/echess.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	defer f.Close()
+
+	// Redirect log output to the file
+	log.SetOutput(f)
 
 	state := NewMainState()
 
-	boardStateChan := make(chan BoardState)
-
 	for !state.Board.Connected {
 		log.Println("Waiting for a board connection...")
-		state.Board.Connect(boardStateChan)
+		state.Board.Connect(state.BoardNotifs)
 		time.Sleep(500 * time.Millisecond)
 	}
 
-	state.Board.sendLEDCommand(state.LitSquares)
-	for state.Game.GameId == "" {
+	go runBackend(state)
 
-		err := lichess.FindPlayingGame(state.Game)
-		if err != nil {
-			log.Fatalf("Error finding game: %v", err)
-		}
+	demo()
 
-		if state.Game.GameId != "" {
-			handleGame(state, boardStateChan)
-			continue
-		}
-
-		if state.Game.GameId == "" {
-			fmt.Println("No game found. Will try again in 3 seconds...")
-			time.Sleep(3 * time.Second)
-			continue
-		}
-	}
 }

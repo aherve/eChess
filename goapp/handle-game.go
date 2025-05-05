@@ -1,9 +1,7 @@
 package main
 
 import (
-	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
@@ -12,41 +10,38 @@ import (
 
 const PLAY_DELAY = 250 * time.Millisecond
 
-type CandidateMove struct {
-	Move     string
-	IssuedAt time.Time
-	mu       *sync.Mutex
-}
+func runBackend(state MainState) {
 
-type MainState struct {
-	Board         *Board
-	Game          *lichess.Game
-	LitSquares    map[int8]bool
-	mu            *sync.Mutex
-	CandidateMove *CandidateMove
-}
+	state.Board.sendLEDCommand(state.LitSquares)
+	for state.Game.GameId == "" {
 
-func NewMainState() MainState {
-	return MainState{
-		Board:      NewBoard(),
-		Game:       lichess.NewGame(),
-		LitSquares: map[int8]bool{},
-		mu:         &sync.Mutex{},
-		CandidateMove: &CandidateMove{
-			mu: &sync.Mutex{},
-		},
+		err := lichess.FindPlayingGame(state.Game)
+		if err != nil {
+			log.Fatalf("Error finding game: %v", err)
+		}
+
+		if state.Game.GameId != "" {
+			handleGame(state)
+			continue
+		}
+
+		if state.Game.GameId == "" {
+			log.Println("No game found. Will try again in 3 seconds...")
+			time.Sleep(3 * time.Second)
+			continue
+		}
 	}
 }
 
-func handleGame(state MainState, boardStateChan chan BoardState) {
+func handleGame(state MainState) {
 	game := state.Game
 	board := state.Board
 
-	fmt.Println("Game ID:", game.GameId, "You are playing as", game.Color)
+	log.Println("Game ID:", game.GameId, "You are playing as", game.Color)
 
 	chans := lichess.NewLichessEventChans()
 	if game.GameId != "" {
-		fmt.Println("starting streaming game", game.GameId, " You play as ", game.Color)
+		log.Println("starting streaming game", game.GameId, " You play as ", game.Color)
 		go lichess.StreamGame(game.GameId, chans)
 	}
 
@@ -66,11 +61,11 @@ func handleGame(state MainState, boardStateChan chan BoardState) {
 			log.Println("Game updated", game.Moves)
 		case <-chans.GameEnded:
 			log.Printf("Game ended")
-			*state.Game = *lichess.NewGame()
-			resetLitSquares(state)
+			state.Game.Reset()
+			state.ResetLitSquares()
+			state.CandidateMove.Reset()
 			return
-		case bdEvt := <-boardStateChan:
-			board.Update(bdEvt)
+		case <-state.BoardNotifs:
 			updateLitSquares(state)
 			board.sendLEDCommand(state.LitSquares)
 			if isMyTurn(state) {
@@ -132,7 +127,7 @@ func findValidMove(state MainState) string {
 	return move
 }
 
-func resetLitSquares(state MainState) {
+func (state MainState) ResetLitSquares() {
 	for k := range state.LitSquares {
 		delete(state.LitSquares, k)
 	}

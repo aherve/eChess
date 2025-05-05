@@ -24,7 +24,7 @@ func ResignGame(gameId string) {
 	body, err := lichessFetch(fmt.Sprintf("board/game/%s/resign", gameId), params, "POST")
 	defer body.Close()
 	if err != nil {
-		fmt.Println("Error resigning game:", err)
+		log.Println("Error resigning game:", err)
 		return
 	}
 }
@@ -58,7 +58,7 @@ func FindPlayingGame(lichessGame *Game) error {
 		lichessGame.FullID = found.FullID
 		lichessGame.GameId = found.GameId
 		lichessGame.Color = found.Color
-		lichessGame.Fen = found.Fen
+		//lichessGame.Fen = found.Fen
 		lichessGame.Opponent = found.Opponent
 		lichessGame.Moves = []string{}
 		lichessGame.Wtime = -1
