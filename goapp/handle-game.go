@@ -73,7 +73,8 @@ func handleGame(state MainState, boardStateChan chan BoardState) {
 			board.Update(bdEvt)
 			updateLitSquares(state)
 			board.sendLEDCommand(state.LitSquares)
-			if move := findValidMove(state); move != "" && isMyTurn(state) {
+			if isMyTurn(state) {
+				move := findValidMove(state)
 				PlayWithDelay(state, move, true)
 			}
 		}
@@ -128,7 +129,6 @@ func findValidMove(state MainState) string {
 		return ""
 	}
 
-	log.Printf("Found valid move %s", move)
 	return move
 }
 
@@ -199,10 +199,12 @@ func PlayWithDelay(state MainState, move string, allowSchedule bool) {
 			state.CandidateMove.IssuedAt = time.Now()
 
 			// Recursive call after a delay (play only, do not re-schedule it in case it changed)
-			go func() {
-				time.Sleep(PLAY_DELAY + time.Millisecond)
-				PlayWithDelay(state, move, false)
-			}()
+			if move != "" {
+				go func() {
+					time.Sleep(PLAY_DELAY + time.Millisecond)
+					PlayWithDelay(state, move, false)
+				}()
+			}
 			return
 		} else {
 			// Move has changed during the cooldown period => abort
@@ -217,9 +219,12 @@ func PlayWithDelay(state MainState, move string, allowSchedule bool) {
 		}
 
 		// Play the move
-		log.Printf("PLAYING MOVE %s", move) // stub for now
-		state.CandidateMove.Move = ""
-		state.CandidateMove.IssuedAt = time.Now()
+		if move != "" {
+			log.Printf("PLAYING MOVE %s", move) // stub for now
+			lichess.PlayMove(state.Game, move)
+			state.CandidateMove.Move = ""
+			state.CandidateMove.IssuedAt = time.Now()
+		}
 	}
 
 }

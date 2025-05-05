@@ -29,6 +29,13 @@ func ResignGame(gameId string) {
 	}
 }
 
+func PlayMove(lichessGame *Game, move string) {
+	_, err := lichessFetch(fmt.Sprintf("board/game/%s/move/%s", lichessGame.GameId, move), nil, "POST")
+	if err != nil {
+		log.Fatalf("error while playing move: %v", err)
+	}
+}
+
 func FindPlayingGame(lichessGame *Game) error {
 	params := make(map[string]string)
 	params["nb"] = "1"
