@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/aherve/eChess/goapp/lichess"
+	"github.com/notnil/chess"
 )
 
 func handleGame(state MainState, boardStateChan chan BoardState) {
@@ -30,6 +31,8 @@ func handleGame(state MainState, boardStateChan chan BoardState) {
 			}
 		case evt := <-chans.GameStateChan:
 			game.Update(evt)
+			updateLitSquares(state)
+			board.sendLEDCommand(state.LitSquares)
 			log.Println("Game updated", game.Moves)
 		case <-chans.GameEnded:
 			log.Printf("Game ended")
@@ -37,6 +40,65 @@ func handleGame(state MainState, boardStateChan chan BoardState) {
 		case bdEvt := <-boardStateChan:
 			log.Println("Board event received:", bdEvt)
 			board.Update(bdEvt)
+			updateLitSquares(state)
+			board.sendLEDCommand(state.LitSquares)
 		}
 	}
+}
+
+func resetLitSquares(state MainState) {
+	for k := range state.LitSquares {
+		delete(state.LitSquares, k)
+	}
+	state.Board.sendLEDCommand(state.LitSquares)
+}
+func updateLitSquares(state MainState) {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+
+	g := NewChessGameFromMoves(state.Game.Moves)
+	for i := range 8 {
+		for j := range 8 {
+			square := chess.NewSquare(chess.File(i), chess.Rank(j))
+
+			chessGameColor := g.Position().Board().Piece(square).Color()
+			boardColor := state.Board.State[j][i]
+			index := getIndexFromCoordinates(i, j)
+			value := chessGameColor != boardColor
+
+			// set to true if the square is lit, delete entry otherwise
+			if value {
+				log.Printf("Debug: square is %d, %d\n", i, j)
+				log.Printf("       chess game color is %v\n", chessGameColor)
+				log.Printf("       board color is %v\n", boardColor)
+				log.Printf("       value is %v\n", value)
+				log.Printf("Lit square %d %d", i, j)
+				state.LitSquares[index] = true
+			} else {
+				delete(state.LitSquares, index)
+			}
+
+		}
+	}
+}
+
+func getIndexFromCoordinates(i, j int) int8 {
+	return int8(8*j + i)
+}
+
+func getCoordinatesFromIndex(index int8) (int8, int8) {
+	return (index % 8), (index / 8)
+}
+
+func NewChessGameFromMoves(moves []string) *chess.Game {
+	g := chess.NewGame(chess.UseNotation(chess.UCINotation{}))
+	for _, move := range moves {
+		if move == "" {
+			continue
+		}
+		if err := g.MoveStr(move); err != nil {
+			log.Fatalf("invalid move %s", move)
+		}
+	}
+	return g
 }

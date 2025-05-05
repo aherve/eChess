@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/notnil/chess"
@@ -17,15 +18,19 @@ type Board struct {
 	Connected bool
 	Port      serial.Port
 	State     BoardState
+	mu        *sync.Mutex
 }
 
 func NewBoard() *Board {
 	return &Board{
 		Connected: false,
+		mu:        &sync.Mutex{},
 	}
 }
 
 func (board *Board) Update(squares BoardState) {
+	board.mu.Lock()
+	defer board.mu.Unlock()
 	for i := range squares {
 		for j := range squares[i] {
 			board.State[i][j] = squares[i][j]
@@ -130,4 +135,26 @@ func (board *Board) Connect(c chan BoardState) {
 		}
 
 	}
+}
+
+func (board *Board) sendLEDCommand(litSquares map[int8]bool) {
+	board.mu.Lock()
+	defer board.mu.Unlock()
+
+	command := make([]byte, len(litSquares)+2)
+	command[0] = 0xFE
+	command[len(command)-1] = 0xFF
+
+	pos := 0
+	for k := range litSquares {
+		i, j := getCoordinatesFromIndex(k)
+		command[pos+1] = byte((j << 4) + i)
+		pos++
+	}
+
+	_, err := board.Port.Write(command)
+	if err != nil {
+		log.Fatalf("Error while writing to port: %v", err)
+	}
+
 }

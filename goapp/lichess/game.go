@@ -1,6 +1,8 @@
 package lichess
 
-import "strings"
+import (
+	"strings"
+)
 
 type Game struct {
 	FullID   string   `json:"fullId"`
@@ -20,6 +22,7 @@ func NewGame() *Game {
 }
 
 func (game *Game) Update(newState GameStateEvent) {
+
 	game.Wtime = newState.Wtime
 	game.Btime = newState.Btime
 

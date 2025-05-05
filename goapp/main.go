@@ -3,33 +3,31 @@ package main
 import (
 	"fmt"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
 )
 
 type MainState struct {
-	Board *Board
-	Game  *lichess.Game
+	Board      *Board
+	Game       *lichess.Game
+	LitSquares map[int8]bool
+	mu         *sync.Mutex
+}
+
+func NewMainState() MainState {
+	return MainState{
+		Board:      NewBoard(),
+		Game:       lichess.NewGame(),
+		LitSquares: map[int8]bool{},
+		mu:         &sync.Mutex{},
+	}
 }
 
 func main() {
 
-	/*
-	 *g := chess.NewGame(chess.UseNotation(chess.UCINotation{}))
-	 *dbg := g.Position().Board().Piece(chess.E4).Color() == chess.White
-	 *log.Println("Debug", dbg)
-	 *if err := g.MoveStr("e2e4"); err != nil {
-	 *  log.Fatalf("Error making move: %v", err)
-	 *}
-	 *dbg = g.Position().Board().Piece(chess.E4).Color() == chess.White
-	 *log.Println("Debug", dbg)
-	 */
-
-	state := MainState{
-		Board: NewBoard(),
-		Game:  lichess.NewGame(),
-	}
+	state := NewMainState()
 
 	boardStateChan := make(chan BoardState)
 
@@ -39,6 +37,7 @@ func main() {
 		time.Sleep(500 * time.Millisecond)
 	}
 
+	state.Board.sendLEDCommand(state.LitSquares)
 	game := state.Game
 	for game.GameId == "" {
 
@@ -50,6 +49,7 @@ func main() {
 		if game.GameId != "" {
 			handleGame(state, boardStateChan)
 			game = lichess.NewGame()
+			resetLitSquares(state)
 			continue
 		}
 
