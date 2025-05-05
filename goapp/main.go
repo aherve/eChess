@@ -3,27 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
 )
-
-type MainState struct {
-	Board      *Board
-	Game       *lichess.Game
-	LitSquares map[int8]bool
-	mu         *sync.Mutex
-}
-
-func NewMainState() MainState {
-	return MainState{
-		Board:      NewBoard(),
-		Game:       lichess.NewGame(),
-		LitSquares: map[int8]bool{},
-		mu:         &sync.Mutex{},
-	}
-}
 
 func main() {
 

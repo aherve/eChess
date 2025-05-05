@@ -1,3 +1,4 @@
+github.com/ajstarks/svgo v0.0.0-20200320125537-f189e35d30ca/go.mod h1:K08gAheRH3/J6wwsYMMT4xOr94bZjxIelGM0+d/wbFw=
 github.com/corentings/chess/v2 v2.0.7 h1:Pli7Cgp4aARSomkDo0kzhq53yNe4x+LYjGM6Rwpv7SY=
 github.com/corentings/chess/v2 v2.0.7/go.mod h1:JhWYDbjY81/7NECXrLzz4g2r9taaMEXvyqS4gYZciVE=
 github.com/creack/goselect v0.1.2 h1:2DNy14+JPjRBgPzAd1thbQp4BSIihxcBf0IXhQXDRa0=

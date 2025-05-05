@@ -3,10 +3,40 @@ package main
 import (
 	"fmt"
 	"log"
+	"sync"
+	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
 	"github.com/notnil/chess"
 )
+
+const PLAY_DELAY = 250 * time.Millisecond
+
+type CandidateMove struct {
+	Move     string
+	IssuedAt time.Time
+	mu       *sync.Mutex
+}
+
+type MainState struct {
+	Board         *Board
+	Game          *lichess.Game
+	LitSquares    map[int8]bool
+	mu            *sync.Mutex
+	CandidateMove *CandidateMove
+}
+
+func NewMainState() MainState {
+	return MainState{
+		Board:      NewBoard(),
+		Game:       lichess.NewGame(),
+		LitSquares: map[int8]bool{},
+		mu:         &sync.Mutex{},
+		CandidateMove: &CandidateMove{
+			mu: &sync.Mutex{},
+		},
+	}
+}
 
 func handleGame(state MainState, boardStateChan chan BoardState) {
 	game := state.Game
@@ -27,7 +57,7 @@ func handleGame(state MainState, boardStateChan chan BoardState) {
 		case evt := <-chans.OpponentGoneChan:
 			log.Printf("OpponentGone: %+v\n", evt)
 			if evt.ClaimWinInSeconds <= 0 {
-				go lichess.ClaimVictory(game.GameId)
+				lichess.ClaimVictory(game.GameId)
 			}
 		case evt := <-chans.GameStateChan:
 			game.Update(evt)
@@ -43,9 +73,24 @@ func handleGame(state MainState, boardStateChan chan BoardState) {
 			board.Update(bdEvt)
 			updateLitSquares(state)
 			board.sendLEDCommand(state.LitSquares)
-			findValidMove(state)
+			if move := findValidMove(state); move != "" && isMyTurn(state) {
+				PlayWithDelay(state, move, true)
+			}
 		}
 	}
+}
+
+func isMyTurn(state MainState) bool {
+	moveLen := len(state.Game.Moves)
+	var currentTurn string
+
+	if moveLen%2 == 0 {
+		currentTurn = "white"
+	} else {
+		currentTurn = "black"
+	}
+
+	return currentTurn == state.Game.Color
 }
 
 func findValidMove(state MainState) string {
@@ -85,7 +130,6 @@ func findValidMove(state MainState) string {
 
 	log.Printf("Found valid move %s", move)
 	return move
-
 }
 
 func resetLitSquares(state MainState) {
@@ -139,4 +183,43 @@ func NewChessGameFromMoves(moves []string) *chess.Game {
 		}
 	}
 	return g
+}
+
+func PlayWithDelay(state MainState, move string, allowSchedule bool) {
+	state.CandidateMove.mu.Lock()
+	defer state.CandidateMove.mu.Unlock()
+
+	// If provided with a new move, then we record it
+	existing := state.CandidateMove.Move
+
+	if move != existing {
+
+		if allowSchedule {
+			state.CandidateMove.Move = move
+			state.CandidateMove.IssuedAt = time.Now()
+
+			// Recursive call after a delay (play only, do not re-schedule it in case it changed)
+			go func() {
+				time.Sleep(PLAY_DELAY + time.Millisecond)
+				PlayWithDelay(state, move, false)
+			}()
+			return
+		} else {
+			// Move has changed during the cooldown period => abort
+			return
+		}
+
+	} else {
+		// move == existing
+		if time.Since(state.CandidateMove.IssuedAt) < PLAY_DELAY {
+			// too soon
+			return
+		}
+
+		// Play the move
+		log.Printf("PLAYING MOVE %s", move) // stub for now
+		state.CandidateMove.Move = ""
+		state.CandidateMove.IssuedAt = time.Now()
+	}
+
 }
