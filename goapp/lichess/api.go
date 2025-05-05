@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
 type secretFile struct {
@@ -34,7 +34,7 @@ func FindPlayingGame(lichessGame *Game) error {
 	params["nb"] = "1"
 	body, err := lichessFetch("account/playing", params, "GET")
 	defer body.Close()
-	data, err := ioutil.ReadAll(body)
+	data, err := io.ReadAll(body)
 	if err != nil {
 		return fmt.Errorf("error reading response body: %v", err)
 	}
@@ -45,16 +45,26 @@ func FindPlayingGame(lichessGame *Game) error {
 	}
 
 	if len(response.NowPlaying) > 0 {
-		*lichessGame = response.NowPlaying[0]
-	} else {
-		*lichessGame = Game{}
+		found := response.NowPlaying[0]
+
+		lichessGame.mu.Lock()
+		lichessGame.FullID = found.FullID
+		lichessGame.GameId = found.GameId
+		lichessGame.Color = found.Color
+		lichessGame.Fen = found.Fen
+		lichessGame.Opponent = found.Opponent
+		lichessGame.Moves = []string{}
+		lichessGame.Wtime = -1
+		lichessGame.Btime = -1
+
+		lichessGame.mu.Unlock()
 	}
 
 	return nil
 }
 
 func readSecret() (string, error) {
-	data, err := ioutil.ReadFile("../app/secret.json")
+	data, err := os.ReadFile("../app/secret.json")
 	if err != nil {
 		return "", err
 	}
@@ -132,7 +142,7 @@ func lichessFetch(path string, params map[string]string, method string) (io.Read
 func StreamGame(gameId string, chans *LichessEventChans) {
 	body, err := lichessFetch(fmt.Sprintf("board/game/stream/%s", gameId), nil, "GET")
 	if err != nil {
-		log.Fatalf("Error streaming game:", err)
+		log.Fatalf("Error streaming game: %v", err)
 		return
 	}
 	defer body.Close()
@@ -195,7 +205,7 @@ func StreamGame(gameId string, chans *LichessEventChans) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		log.Fatalf("Error reading stream:", err)
+		log.Fatalf("Error reading stream: %v", err)
 		return
 	}
 

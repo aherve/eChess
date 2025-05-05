@@ -36,11 +36,11 @@ func handleGame(state MainState, boardStateChan chan BoardState) {
 			log.Println("Game updated", game.Moves)
 		case <-chans.GameEnded:
 			log.Printf("Game ended")
-			state.Game = lichess.NewGame()
+			*state.Game = *lichess.NewGame()
 			resetLitSquares(state)
 			return
 		case bdEvt := <-boardStateChan:
-			log.Println("Board event received:", bdEvt)
+			log.Println("Board event received")
 			board.Update(bdEvt)
 			updateLitSquares(state)
 			board.sendLEDCommand(state.LitSquares)

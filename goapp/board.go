@@ -104,6 +104,9 @@ func (board *Board) StreamEvents(c chan BoardState) {
 }
 
 func (board *Board) Connect(c chan BoardState) {
+	board.mu.Lock()
+	defer board.mu.Unlock()
+
 	okPortPrefixes := []string{"/dev/ttyUSB0", "/dev/tty.usbserial", "/dev/cu.usbserial"}
 
 	ports, err := serial.GetPortsList()

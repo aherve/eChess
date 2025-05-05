@@ -2,6 +2,7 @@ package lichess
 
 import (
 	"strings"
+	"sync"
 )
 
 type Game struct {
@@ -13,18 +14,18 @@ type Game struct {
 	Wtime    int      `json:"-"`
 	Btime    int      `json:"-"`
 	Moves    []string `json:"-"`
+	mu       *sync.Mutex
 }
 
 func NewGame() *Game {
 	return &Game{
-		Opponent: Opponent{},
-		FullID:   "",
-		GameId:   "",
-		Moves:    []string{},
+		mu: &sync.Mutex{},
 	}
 }
 
 func (game *Game) Update(newState GameStateEvent) {
+	game.mu.Lock()
+	defer game.mu.Unlock()
 
 	game.Wtime = newState.Wtime
 	game.Btime = newState.Btime
