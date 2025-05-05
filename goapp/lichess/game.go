@@ -18,6 +18,9 @@ type Game struct {
 func NewGame() *Game {
 	return &Game{
 		Opponent: Opponent{},
+		FullID:   "",
+		GameId:   "",
+		Moves:    []string{},
 	}
 }
 

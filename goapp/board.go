@@ -50,11 +50,11 @@ func buildSquares(evt BoardEvent) BoardState {
 			blackBit := blackByte & (1 << j)
 
 			if whiteBit > 0 {
-				board[i/2][j] = chess.White
+				board[j][i/2] = chess.White
 			} else if blackBit > 0 {
-				board[i/2][j] = chess.Black
+				board[j][i/2] = chess.Black
 			} else {
-				board[i/2][j] = chess.NoColor
+				board[j][i/2] = chess.NoColor
 			}
 		}
 	}

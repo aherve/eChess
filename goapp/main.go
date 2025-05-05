@@ -38,22 +38,21 @@ func main() {
 	}
 
 	state.Board.sendLEDCommand(state.LitSquares)
-	game := state.Game
-	for game.GameId == "" {
+	for state.Game.GameId == "" {
 
-		err := lichess.FindPlayingGame(game)
+		err := lichess.FindPlayingGame(state.Game)
 		if err != nil {
 			log.Fatalf("Error finding game: %v", err)
 		}
 
-		if game.GameId != "" {
+		if state.Game.GameId != "" {
 			handleGame(state, boardStateChan)
-			game = lichess.NewGame()
+			state.Game = lichess.NewGame()
 			resetLitSquares(state)
 			continue
 		}
 
-		if game.GameId == "" {
+		if state.Game.GameId == "" {
 			fmt.Println("No game found. Will try again in 3 seconds...")
 			time.Sleep(3 * time.Second)
 			continue

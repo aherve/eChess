@@ -62,17 +62,12 @@ func updateLitSquares(state MainState) {
 			square := chess.NewSquare(chess.File(i), chess.Rank(j))
 
 			chessGameColor := g.Position().Board().Piece(square).Color()
-			boardColor := state.Board.State[j][i]
+			boardColor := state.Board.State[i][j]
 			index := getIndexFromCoordinates(i, j)
 			value := chessGameColor != boardColor
 
 			// set to true if the square is lit, delete entry otherwise
 			if value {
-				log.Printf("Debug: square is %d, %d\n", i, j)
-				log.Printf("       chess game color is %v\n", chessGameColor)
-				log.Printf("       board color is %v\n", boardColor)
-				log.Printf("       value is %v\n", value)
-				log.Printf("Lit square %d %d", i, j)
 				state.LitSquares[index] = true
 			} else {
 				delete(state.LitSquares, index)
