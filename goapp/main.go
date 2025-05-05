@@ -47,8 +47,6 @@ func main() {
 
 		if state.Game.GameId != "" {
 			handleGame(state, boardStateChan)
-			state.Game = lichess.NewGame()
-			resetLitSquares(state)
 			continue
 		}
 
