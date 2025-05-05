@@ -13,6 +13,7 @@ type Game struct {
 	Opponent Opponent `json:"opponent"`
 	Wtime    int      `json:"-"`
 	Btime    int      `json:"-"`
+	Winner   string   `json:"-"` // "white" or "black"
 	Moves    []string `json:"-"`
 	mu       *sync.Mutex
 }
@@ -34,6 +35,7 @@ func (g *Game) Reset() {
 	g.Wtime = -1
 	g.Btime = -1
 	g.Moves = []string{}
+	g.Winner = ""
 }
 
 func (game *Game) Update(newState GameStateEvent) {
@@ -42,6 +44,7 @@ func (game *Game) Update(newState GameStateEvent) {
 
 	game.Wtime = newState.Wtime
 	game.Btime = newState.Btime
+	game.Winner = newState.Winner
 
 	newMoves := []string{}
 	rawMoves := strings.SplitSeq(newState.Moves, " ")

@@ -3,6 +3,7 @@ package lichess
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -19,9 +20,70 @@ type withType struct {
 	Type string `json:"type"`
 }
 
+func AbortGame(gameId string) {
+	_, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/abort", gameId), nil, "POST")
+	if err != nil {
+		log.Printf("Error aborting game: %v", err)
+	}
+}
+
+func DrawGame(gameId string) {
+	_, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/draw/yes", gameId), nil, "POST")
+	if err != nil {
+		log.Printf("Error drawing game: %v", err)
+	}
+}
+
+func CreateSeek(timeMinute, incrementSeconds string) *context.CancelFunc {
+	ctx, cancel := context.WithCancel(context.Background())
+	params := make(map[string]string)
+	params["increment"] = incrementSeconds
+	params["rated"] = "true"
+	params["ratingRange"] = ""
+	params["time"] = timeMinute
+	params["variant"] = "standard"
+
+	body, err := lichessFetch(ctx, "board/seek", params, "POST")
+	if err != nil {
+		log.Printf("Error creating seek: %v", err)
+	}
+
+	// Stream the response in the background
+	go streamResponse(ctx, body)
+
+	log.Println(fmt.Sprintf("%s|%s seek successfully created", timeMinute, incrementSeconds))
+	return &cancel
+}
+
+func streamResponse(ctx context.Context, respBody io.ReadCloser) {
+	defer respBody.Close()
+
+	reader := bufio.NewReader(respBody)
+
+	for {
+		select {
+		case <-ctx.Done():
+			log.Println("Streaming canceled")
+			return
+		default:
+			_, err := reader.ReadString('\n')
+			if err != nil && err != io.EOF {
+				log.Printf("Error reading response: %v", err)
+				return
+			}
+			if err == io.EOF {
+				log.Println("End of stream")
+				return
+			}
+
+			log.Printf("seek is alive")
+		}
+	}
+}
+
 func ResignGame(gameId string) {
 	params := make(map[string]string)
-	body, err := lichessFetch(fmt.Sprintf("board/game/%s/resign", gameId), params, "POST")
+	body, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/resign", gameId), params, "POST")
 	defer body.Close()
 	if err != nil {
 		log.Println("Error resigning game:", err)
@@ -30,7 +92,7 @@ func ResignGame(gameId string) {
 }
 
 func PlayMove(lichessGame *Game, move string) {
-	_, err := lichessFetch(fmt.Sprintf("board/game/%s/move/%s", lichessGame.GameId, move), nil, "POST")
+	_, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/move/%s", lichessGame.GameId, move), nil, "POST")
 	if err != nil {
 		log.Fatalf("error while playing move: %v", err)
 	}
@@ -39,7 +101,7 @@ func PlayMove(lichessGame *Game, move string) {
 func FindPlayingGame(lichessGame *Game) error {
 	params := make(map[string]string)
 	params["nb"] = "1"
-	body, err := lichessFetch("account/playing", params, "GET")
+	body, err := lichessFetch(context.Background(), "account/playing", params, "GET")
 	defer body.Close()
 	data, err := io.ReadAll(body)
 	if err != nil {
@@ -94,7 +156,7 @@ func buildURLParams(params map[string]string) string {
 	return urlParams
 }
 
-func lichessFetch(path string, params map[string]string, method string) (io.ReadCloser, error) {
+func lichessFetch(ctx context.Context, path string, params map[string]string, method string) (io.ReadCloser, error) {
 
 	lichessURL := fmt.Sprintf("https://lichess.org/api/%s", path)
 	// Add query parameters to the URL
@@ -114,6 +176,8 @@ func lichessFetch(path string, params map[string]string, method string) (io.Read
 		if err != nil {
 			return nil, fmt.Errorf("error creating request: %v", err)
 		}
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
 	} else if method == "GET" {
 		req, err = http.NewRequest(method, lichessURL, nil)
 		if err != nil {
@@ -125,8 +189,11 @@ func lichessFetch(path string, params map[string]string, method string) (io.Read
 
 	apiToken, err := readSecret()
 	if err != nil {
-		return nil, fmt.Errorf("error re0ding secret: %v", err)
+		return nil, fmt.Errorf("error reading secret: %v", err)
 	}
+
+	// Use context
+	req = req.WithContext(ctx)
 
 	// Set headers
 	req.Header.Set("Authorization", "Bearer "+apiToken)
@@ -147,7 +214,7 @@ func lichessFetch(path string, params map[string]string, method string) (io.Read
 }
 
 func StreamGame(gameId string, chans *LichessEventChans) {
-	body, err := lichessFetch(fmt.Sprintf("board/game/stream/%s", gameId), nil, "GET")
+	body, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/stream/%s", gameId), nil, "GET")
 	if err != nil {
 		log.Fatalf("Error streaming game: %v", err)
 		return
@@ -221,7 +288,7 @@ func StreamGame(gameId string, chans *LichessEventChans) {
 }
 
 func ClaimVictory(gameId string) {
-	_, err := lichessFetch(fmt.Sprintf("board/game/%s/claim-victory", gameId), nil, "POST")
+	_, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/claim-victory", gameId), nil, "POST")
 	if err != nil {
 		log.Printf("Error claiming victory: %v", err)
 	}

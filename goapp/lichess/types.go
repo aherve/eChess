@@ -15,7 +15,7 @@ type GameStateEvent struct {
 	Wtime  int    `json:"wtime"`
 	Btime  int    `json:"btime"`
 	Status string `json:"status"`
-	Winner string `json:"winner"`
+	Winner string `json:"winner"` // "white" or "black"
 	Moves  string `json:"moves"`
 }
 

@@ -8,7 +8,7 @@ import (
 	"github.com/notnil/chess"
 )
 
-const PLAY_DELAY = 250 * time.Millisecond
+const PLAY_DELAY = 200 * time.Millisecond
 
 func runBackend(state MainState) {
 
@@ -27,6 +27,7 @@ func runBackend(state MainState) {
 
 		if state.Game.GameId == "" {
 			log.Println("No game found. Will try again in 3 seconds...")
+			state.UIState.Input <- NoCurrentGame
 			time.Sleep(3 * time.Second)
 			continue
 		}
@@ -38,6 +39,8 @@ func handleGame(state MainState) {
 	board := state.Board
 
 	log.Println("Game ID:", game.GameId, "You are playing as", game.Color)
+
+	state.UIState.Input <- GameStarted
 
 	chans := lichess.NewLichessEventChans()
 	if game.GameId != "" {
@@ -61,6 +64,15 @@ func handleGame(state MainState) {
 			log.Println("Game updated", game.Moves)
 		case <-chans.GameEnded:
 			log.Printf("Game ended")
+
+			if game.Winner == game.Color {
+				state.UIState.Input <- GameWon
+			} else if game.Winner != "" {
+				state.UIState.Input <- GameLost
+			} else {
+				state.UIState.Input <- GameDrawn
+			}
+
 			state.Game.Reset()
 			state.ResetLitSquares()
 			state.CandidateMove.Reset()

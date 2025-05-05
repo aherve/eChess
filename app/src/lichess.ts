@@ -49,11 +49,11 @@ export async function createSeek({
   const seek = await lichessFetch(
     "board/seek",
     {
-      rated: "true",
-      time: `${time}`,
       increment: `${increment}`,
-      variant: "standard",
+      rated: "true",
       ratingRange: "",
+      time: `${time}`,
+      variant: "standard",
     },
     "POST",
     controller.signal

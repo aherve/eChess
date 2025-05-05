@@ -12,7 +12,9 @@ type MainState struct {
 	CandidateMove *CandidateMove
 	Game          *lichess.Game
 	LitSquares    map[int8]bool
-	mu            *sync.Mutex
+	UIState       *UIState
+
+	mu *sync.Mutex
 }
 
 func NewMainState() MainState {
@@ -21,9 +23,11 @@ func NewMainState() MainState {
 		BoardNotifs: make(chan bool),
 		Game:        lichess.NewGame(),
 		LitSquares:  map[int8]bool{},
-		mu:          &sync.Mutex{},
+		UIState:     NewUIState(),
 		CandidateMove: &CandidateMove{
 			mu: &sync.Mutex{},
 		},
+
+		mu: &sync.Mutex{},
 	}
 }
