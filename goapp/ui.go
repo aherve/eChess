@@ -70,7 +70,7 @@ func runUI(state MainState) {
 			select {
 			case <-time.Tick(200 * time.Millisecond):
 				// update clock display if we are playing
-				if state.Game.GameId == "" {
+				if state.Game.FullID == "" {
 					break
 				}
 				app.QueueUpdateDraw(func() {
@@ -154,7 +154,7 @@ func runUI(state MainState) {
 				case StopSeeking:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("seeking")
-						if state.Game.GameId != "" {
+						if state.Game.FullID != "" {
 							pages.ShowPage("play")
 							pages.HidePage("seek")
 						} else {

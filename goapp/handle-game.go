@@ -13,19 +13,19 @@ const PLAY_DELAY = 250 * time.Millisecond
 func runBackend(state MainState) {
 
 	state.Board.sendLEDCommand(state.LitSquares)
-	for state.Game.GameId == "" {
+	for state.Game.FullID == "" {
 
 		err := lichess.FindPlayingGame(state.Game)
 		if err != nil {
 			log.Fatalf("Error finding game: %v", err)
 		}
 
-		if state.Game.GameId != "" {
+		if state.Game.FullID != "" {
 			handleGame(state)
 			continue
 		}
 
-		if state.Game.GameId == "" {
+		if state.Game.FullID == "" {
 			log.Println("No game found. Will try again in 3 seconds...")
 			state.UIState.Input <- NoCurrentGame
 			time.Sleep(3 * time.Second)
@@ -38,15 +38,15 @@ func handleGame(state MainState) {
 	game := state.Game
 	board := state.Board
 
-	log.Println("Game ID:", game.GameId, "You are playing as", game.Color)
+	log.Println("Game ID:", game.FullID, "You are playing as", game.Color)
 
 	state.UIState.Input <- GameStarted
 	go PlayStartSequence(state)
 
 	chans := lichess.NewLichessEventChans()
-	if game.GameId != "" {
-		log.Println("starting streaming game", game.GameId, " You play as ", game.Color)
-		go lichess.StreamGame(game.GameId, chans)
+	if game.FullID != "" {
+		log.Println("starting streaming game", game.FullID, " You play as ", game.Color)
+		go lichess.StreamGame(game.FullID, chans)
 	}
 
 	for {
@@ -56,7 +56,7 @@ func handleGame(state MainState) {
 		case evt := <-chans.OpponentGoneChan:
 			log.Printf("OpponentGone: %+v\n", evt)
 			if evt.ClaimWinInSeconds <= 0 {
-				lichess.ClaimVictory(game.GameId)
+				lichess.ClaimVictory(game.FullID)
 			}
 		case evt := <-chans.GameStateChan:
 			game.Update(evt)
@@ -216,8 +216,7 @@ func PlayWithDelay(state MainState, move string, allowSchedule bool) {
 
 		// Play the move
 		if move != "" {
-			log.Printf("PLAYING MOVE %s", move) // stub for now
-			lichess.PlayMove(state.Game, move)
+			lichess.PlayMove(state.Game.FullID, move)
 			state.CandidateMove.Move = ""
 			state.CandidateMove.IssuedAt = time.Now()
 		}

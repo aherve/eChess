@@ -82,16 +82,16 @@ func streamResponse(ctx context.Context, respBody io.ReadCloser) {
 }
 
 func ResignGame(gameId string) {
-	params := make(map[string]string)
-	_, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/resign", gameId), params, "POST")
+	_, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/resign", gameId), nil, "POST")
 	if err != nil {
 		log.Println("Error resigning game:", err)
 		return
 	}
 }
 
-func PlayMove(lichessGame *Game, move string) {
-	_, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/move/%s", lichessGame.GameId, move), nil, "POST")
+func PlayMove(gameId string, move string) {
+	log.Printf("PLAYING MOVE %s on game %s", move, gameId)
+	_, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/move/%s", gameId, move), nil, "POST")
 	if err != nil {
 		log.Fatalf("error while playing move: %v", err)
 	}
