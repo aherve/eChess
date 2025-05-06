@@ -13,7 +13,7 @@ func main() {
 		log.Fatalf("error opening file: %v", err)
 	}
 	defer f.Close()
-	//log.SetOutput(f)
+	log.SetOutput(f)
 
 	// Init state
 	state := NewMainState()

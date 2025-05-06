@@ -1,0 +1,110 @@
+package main
+
+import (
+	"context"
+	"log"
+
+	"github.com/aherve/eChess/goapp/lichess"
+)
+
+type UIOutput int
+
+const (
+	Seek1510 UIOutput = iota
+	Seek1530
+	Seek3020
+	Seek3030
+	Seek105
+	CancelSeek
+	Resign
+	Abort
+	Draw
+)
+
+func (o UIOutput) String() string {
+	switch o {
+	case Seek105:
+		return "Seek10|5"
+	case Seek1510:
+		return "Seek15|10"
+	case Seek1530:
+		return "Seek15|30"
+	case Seek3020:
+		return "Seek30|20"
+	case Seek3030:
+		return "Seek30|30"
+	case CancelSeek:
+		return "CancelSeek"
+	case Resign:
+		return "Resign"
+	case Abort:
+		return "Abort"
+	case Draw:
+		return "Draw"
+	default:
+		return "Unknown UIOutput"
+	}
+}
+
+type UIState struct {
+	Input      chan UIInput
+	Output     chan UIOutput
+	cancelSeek *context.CancelFunc
+}
+
+func NewUIState() *UIState {
+	return &UIState{
+		Input:  make(chan UIInput),
+		Output: make(chan UIOutput),
+	}
+}
+
+func emitActions(state MainState) {
+
+	for {
+		select {
+		case output := <-state.UIState.Output:
+			switch output {
+			case Seek105:
+				safeCreateSeek("10", "5", state)
+			case Seek1510:
+				safeCreateSeek("15", "10", state)
+			case Seek1530:
+				safeCreateSeek("15", "30", state)
+			case Seek3020:
+				safeCreateSeek("30", "20", state)
+			case Seek3030:
+				safeCreateSeek("30", "30", state)
+			case CancelSeek:
+				log.Println("Canceling seek")
+				if state.UIState.cancelSeek != nil {
+					(*state.UIState.cancelSeek)()
+					state.UIState.cancelSeek = nil
+					log.Println("Seek cancelled")
+				} else {
+					log.Println("No seek to cancel")
+				}
+			case Resign:
+				lichess.ResignGame(state.Game.GameId)
+			case Abort:
+				lichess.AbortGame(state.Game.GameId)
+			case Draw:
+				lichess.DrawGame(state.Game.GameId)
+			default:
+				log.Println("Unknown UI Output:", output)
+			}
+		}
+	}
+}
+
+func safeCreateSeek(time, increment string, state MainState) {
+	state.mu.Lock()
+	defer state.mu.Unlock()
+	if state.UIState.cancelSeek != nil {
+		log.Println("Canceling previous seek")
+		(*state.UIState.cancelSeek)()
+		state.UIState.cancelSeek = nil
+		log.Println("Previous seek cancelled")
+	}
+	state.UIState.cancelSeek = lichess.CreateSeek(time, increment)
+}
