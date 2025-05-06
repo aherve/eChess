@@ -83,8 +83,7 @@ func streamResponse(ctx context.Context, respBody io.ReadCloser) {
 
 func ResignGame(gameId string) {
 	params := make(map[string]string)
-	body, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/resign", gameId), params, "POST")
-	defer body.Close()
+	_, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/resign", gameId), params, "POST")
 	if err != nil {
 		log.Println("Error resigning game:", err)
 		return

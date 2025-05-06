@@ -87,11 +87,17 @@ func emitActions(state MainState) {
 				}
 				state.UIState.Input <- StopSeeking
 			case Resign:
-				lichess.ResignGame(state.Game.GameId)
+				if gameId := state.Game.GameId; gameId != "" {
+					lichess.ResignGame(gameId)
+				}
 			case Abort:
-				lichess.AbortGame(state.Game.GameId)
+				if gameId := state.Game.GameId; gameId != "" {
+					lichess.AbortGame(gameId)
+				}
 			case Draw:
-				lichess.DrawGame(state.Game.GameId)
+				if gameId := state.Game.GameId; gameId != "" {
+					lichess.DrawGame(gameId)
+				}
 			default:
 				log.Println("Unknown UI Output:", output)
 			}

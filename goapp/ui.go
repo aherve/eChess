@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/aherve/eChess/goapp/lichess"
 	"github.com/gdamore/tcell/v2"
 	"github.com/notnil/chess"
 	"github.com/rivo/tview"
@@ -17,33 +18,43 @@ func runUI(state MainState) {
 	seekButtons, seekTitle := seekButtons(state)
 
 	playerName := tview.NewTextView().
-		SetText("You").
+		SetText("You Play " + state.Game.Color).
 		SetTextAlign(tview.AlignLeft)
 
 	playerClock := tview.NewTextView().
-		SetText("05:00").
 		SetTextAlign(tview.AlignRight)
 
 	topBar := tview.NewFlex().
 		AddItem(playerName, 0, 3, false).
 		AddItem(playerClock, 10, 0, false)
 
+	topBar.SetBorder(true)
+	topBar.SetBorderPadding(1, 1, 5, 5)
+
 	// Opponent info
 	opponentName := tview.NewTextView().
-		SetText("Opponent").
+		SetText(getOpponentText(*state.Game)).
 		SetTextAlign(tview.AlignLeft)
 
 	opponentClock := tview.NewTextView().
-		SetText("05:00").
 		SetTextAlign(tview.AlignRight)
 
 	middleBar := tview.NewFlex().
 		AddItem(opponentName, 0, 3, false).
 		AddItem(opponentClock, 10, 0, false)
 
+	middleBar.SetBorder(true)
+	middleBar.SetBorderPadding(1, 1, 5, 5)
+
+	middleBar.SetBorder(true)
+
+	bottomBar := btnActions(state.UIState.Output)
+
 	playLayout := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(topBar, 2, 0, false).   // more space
-		AddItem(middleBar, 2, 0, false) // more space
+		AddItem(topBar, 5, 0, false).
+		AddItem(middleBar, 5, 0, false).
+		AddItem(tview.NewBox(), 0, 1, false). // spacer
+		AddItem(bottomBar, 3, 0, false)
 
 	seekingPage := seekingPage(state)
 
@@ -96,6 +107,7 @@ func runUI(state MainState) {
 						pages.HidePage("seek")
 						pages.HidePage("seeking")
 						pages.ShowPage("play")
+						opponentName.SetText(getOpponentText(*state.Game))
 					})
 				case GameWon:
 					app.QueueUpdateDraw(func() {
@@ -245,6 +257,23 @@ func seekingPage(state MainState) *tview.Flex {
 	return centered
 }
 
+func btnActions(c chan UIOutput) *tview.Flex {
+	// create a flex layout with three buttons
+	btn := func(label string, action UIOutput) *tview.Button {
+		return tview.NewButton(label).SetSelectedFunc(func() {
+			c <- action
+		})
+	}
+	flex := tview.NewFlex().
+		AddItem(btn("Resign", Resign), 0, 1, false).
+		AddItem(tview.NewBox(), 1, 0, false).
+		AddItem(btn("Draw", Draw), 0, 1, false).
+		AddItem(tview.NewBox(), 1, 0, false).
+		AddItem(btn("Abort", Abort), 0, 1, false)
+
+	return flex
+}
+
 func displayTimeElapsed(clockUpdatedAt time.Time, wbTime int) string {
 	elapsed := int(time.Since(clockUpdatedAt).Seconds())
 	remaining := wbTime - elapsed
@@ -259,4 +288,8 @@ func displayTime(secs int) string {
 	seconds := secs % 60
 
 	return fmt.Sprintf("%02d:%02d", minutes, seconds)
+}
+
+func getOpponentText(g lichess.Game) string {
+	return fmt.Sprintf("%s (%d)", g.Opponent.Username, g.Opponent.Rating)
 }
