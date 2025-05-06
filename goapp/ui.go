@@ -94,7 +94,6 @@ func runUI(state MainState) {
 					}
 
 					elapsed := displayTimeElapsed(state.Game.ClockUpdatedAt, fromTime)
-					log.Println("Elapsed time: ", elapsed)
 					toUpdateWithElapsed.SetText(elapsed)
 					toUpdateWithFixed.SetText(displayTime(fixedTime))
 

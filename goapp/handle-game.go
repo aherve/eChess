@@ -8,7 +8,7 @@ import (
 	"github.com/notnil/chess"
 )
 
-const PLAY_DELAY = 200 * time.Millisecond
+const PLAY_DELAY = 250 * time.Millisecond
 
 func runBackend(state MainState) {
 
