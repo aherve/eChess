@@ -183,22 +183,17 @@ func runUI(state MainState) {
 }
 
 func seekButtons(state MainState) (*tview.Flex, *tview.TextView) {
-	btn := func(label string, action UIOutput) *tview.Button {
-		return tview.NewButton(label).SetSelectedFunc(func() {
-			state.UIState.Output <- action
-		})
-	}
 
 	// Rows with horizontal spacing
 	row1 := tview.NewFlex().
-		AddItem(btn("15|10", Seek1510), 0, 1, false).
+		AddItem(makeBtn("15|10", Seek1510, state.UIState.Output), 0, 1, false).
 		AddItem(tview.NewBox(), 1, 0, false).
-		AddItem(btn("15|30", Seek1530), 0, 1, false)
+		AddItem(makeBtn("15|30", Seek1530, state.UIState.Output), 0, 1, false)
 
 	row2 := tview.NewFlex().
-		AddItem(btn("30|20", Seek3020), 0, 1, false).
+		AddItem(makeBtn("30|20", Seek3020, state.UIState.Output), 0, 1, false).
 		AddItem(tview.NewBox(), 1, 0, false).
-		AddItem(btn("30|30", Seek3030), 0, 1, false)
+		AddItem(makeBtn("30|30", Seek3030, state.UIState.Output), 0, 1, false)
 
 	// Grid of buttons with vertical spacing
 	buttonGrid := tview.NewFlex().
@@ -296,4 +291,13 @@ func displayTime(millis int) string {
 
 func getOpponentText(g lichess.Game) string {
 	return fmt.Sprintf("%s (%d)", g.Opponent.Username, g.Opponent.Rating)
+}
+
+func makeBtn(label string, action UIOutput, c chan UIOutput) *tview.Button {
+	btn := tview.NewButton(label).
+		SetSelectedFunc(func() { c <- action })
+
+	btn.SetBorderPadding(1, 1, 1, 1)
+
+	return btn
 }
