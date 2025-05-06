@@ -116,7 +116,8 @@ func (board *Board) Connect(c chan bool) {
 		log.Fatal(err)
 	}
 	if len(ports) == 0 {
-		log.Fatal("No serial ports found!")
+		log.Println("No serial ports found!")
+		return
 	}
 	for _, portName := range ports {
 

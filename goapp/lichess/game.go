@@ -3,6 +3,7 @@ package lichess
 import (
 	"strings"
 	"sync"
+	"time"
 )
 
 type Game struct {
@@ -10,12 +11,13 @@ type Game struct {
 	GameId string `json:"gameId"`
 	Color  string `json:"color"` // "white" or "black"
 	//Fen      string   `json:"fen"`
-	Opponent Opponent `json:"opponent"`
-	Wtime    int      `json:"-"`
-	Btime    int      `json:"-"`
-	Winner   string   `json:"-"` // "white" or "black"
-	Moves    []string `json:"-"`
-	mu       *sync.Mutex
+	Opponent       Opponent  `json:"opponent"`
+	Wtime          int       `json:"-"`
+	Btime          int       `json:"-"`
+	ClockUpdatedAt time.Time `json:"-"`
+	Winner         string    `json:"-"` // "white" or "black"
+	Moves          []string  `json:"-"`
+	mu             *sync.Mutex
 }
 
 func NewGame() *Game {
@@ -36,6 +38,7 @@ func (g *Game) Reset() {
 	g.Btime = -1
 	g.Moves = []string{}
 	g.Winner = ""
+	g.ClockUpdatedAt = time.Now()
 }
 
 func (game *Game) Update(newState GameStateEvent) {
@@ -45,6 +48,7 @@ func (game *Game) Update(newState GameStateEvent) {
 	game.Wtime = newState.Wtime
 	game.Btime = newState.Btime
 	game.Winner = newState.Winner
+	game.ClockUpdatedAt = time.Now()
 
 	newMoves := []string{}
 	rawMoves := strings.SplitSeq(newState.Moves, " ")
