@@ -41,7 +41,7 @@ func handleGame(state MainState) {
 	log.Println("Game ID:", game.GameId, "You are playing as", game.Color)
 
 	state.UIState.Input <- GameStarted
-	PlayStartSequence(state)
+	go PlayStartSequence(state)
 
 	chans := lichess.NewLichessEventChans()
 	if game.GameId != "" {
@@ -65,7 +65,7 @@ func handleGame(state MainState) {
 			log.Println("Game updated", game.Moves)
 		case <-chans.GameEnded:
 			log.Printf("Game ended")
-			state.PlayEndSequence()
+			go state.PlayEndSequence()
 
 			if game.Winner == game.Color {
 				state.UIState.Input <- GameWon

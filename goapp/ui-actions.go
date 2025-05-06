@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
 )
@@ -84,6 +85,7 @@ func emitActions(state MainState) {
 				} else {
 					log.Println("No seek to cancel")
 				}
+				state.UIState.Input <- StopSeeking
 			case Resign:
 				lichess.ResignGame(state.Game.GameId)
 			case Abort:
@@ -97,14 +99,16 @@ func emitActions(state MainState) {
 	}
 }
 
-func safeCreateSeek(time, increment string, state MainState) {
+func safeCreateSeek(gameTime, increment string, state MainState) {
 	state.mu.Lock()
 	defer state.mu.Unlock()
+	state.UIState.Input <- Seeking
 	if state.UIState.cancelSeek != nil {
 		log.Println("Canceling previous seek")
 		(*state.UIState.cancelSeek)()
 		state.UIState.cancelSeek = nil
 		log.Println("Previous seek cancelled")
+		time.Sleep(200 * time.Millisecond) // don't spam lichess
 	}
-	state.UIState.cancelSeek = lichess.CreateSeek(time, increment)
+	state.UIState.cancelSeek = lichess.CreateSeek(gameTime, increment)
 }

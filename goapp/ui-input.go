@@ -9,6 +9,8 @@ const (
 	GameAborted
 	GameDrawn
 	NoCurrentGame
+	Seeking
+	StopSeeking
 )
 
 func (i UIInput) String() string {
@@ -25,6 +27,10 @@ func (i UIInput) String() string {
 		return "GameAborted"
 	case GameDrawn:
 		return "GameDrawn"
+	case Seeking:
+		return "Seeking"
+	case StopSeeking:
+		return "StopSeeking"
 	default:
 		return "Unknown UIInput"
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -42,8 +43,17 @@ func runUI(state MainState) {
 		AddItem(topBar, 2, 0, false).   // more space
 		AddItem(middleBar, 2, 0, false) // more space
 
+	seekingPage := seekingPage(state)
+
+	// DEBUG
+	go func() {
+		time.Sleep(1 * time.Second)
+		state.UIState.Input <- Seeking
+	}()
+
 	pages := tview.NewPages().
 		AddPage("seek", seekButtons, true, true).
+		AddPage("seeking", seekingPage, true, false).
 		AddPage("play", playLayout, true, false)
 
 	// handle input events
@@ -56,38 +66,58 @@ func runUI(state MainState) {
 				case GameStarted:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("seek")
+						pages.HidePage("seeking")
 						pages.ShowPage("play")
 					})
 				case GameWon:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("play")
 						pages.ShowPage("seek")
+						pages.HidePage("seeking")
 						seekTitle.SetText("Victory !")
 					})
 				case GameLost:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("play")
 						pages.ShowPage("seek")
+						pages.HidePage("seeking")
 						seekTitle.SetText("Looooooose")
 					})
 				case GameAborted:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("play")
 						pages.ShowPage("seek")
+						pages.HidePage("seeking")
 						seekTitle.SetText("Game aborted")
 					})
 				case GameDrawn:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("play")
 						pages.ShowPage("seek")
+						pages.HidePage("seeking")
 						seekTitle.SetText("It's a draw ¯\\_(ツ)_/¯")
 					})
 				case NoCurrentGame:
 					app.QueueUpdateDraw(func() {
-						pages.HidePage("play")
-						pages.ShowPage("seek")
 						if seekTitle.GetText(true) == "" {
 							seekTitle.SetText("Ready to play")
+						}
+					})
+				case Seeking:
+					app.QueueUpdateDraw(func() {
+						pages.HidePage("play")
+						pages.HidePage("seek")
+						pages.ShowPage("seeking")
+					})
+				case StopSeeking:
+					app.QueueUpdateDraw(func() {
+						pages.HidePage("seeking")
+						if state.Game.GameId != "" {
+							pages.ShowPage("play")
+							pages.HidePage("seek")
+						} else {
+							pages.ShowPage("seek")
+							pages.HidePage("play")
 						}
 					})
 				}
@@ -109,47 +139,6 @@ func runUI(state MainState) {
 	}
 
 }
-
-/*
- *func seekButtons(state MainState) *tview.Flex {
- *
- *  btn := func(label string, action UIOutput) *tview.Button {
- *    return tview.NewButton(label).SetSelectedFunc(func() {
- *      state.UIState.Output <- action
- *    })
- *  }
- *
- *  // Rows with horizontal spacing (A | spacer | B)
- *  row1 := tview.NewFlex().
- *    AddItem(btn("15|10", Seek1510), 0, 1, false).
- *    AddItem(tview.NewBox(), 1, 0, false). // spacer
- *    AddItem(btn("15|30", Seek1530), 0, 1, false)
- *
- *  // Rows with horizontal spacing (C | spacer | D)
- *  row2 := tview.NewFlex().
- *    AddItem(btn("30|20", Seek3020), 0, 1, false).
- *    AddItem(tview.NewBox(), 1, 0, false). // spacer
- *    AddItem(btn("30|30", Seek3030), 0, 1, false)
- *
- *  // Vertical spacing between rows (row1, spacer, row2)
- *  buttonGrid := tview.NewFlex().
- *    SetDirection(tview.FlexRow).
- *    AddItem(row1, 3, 0, false).
- *    AddItem(tview.NewBox(), 1, 0, false). // vertical spacer
- *    AddItem(row2, 3, 0, false)
- *
- *  centeredButtons := tview.NewFlex().
- *    AddItem(nil, 0, 1, false).
- *    AddItem(tview.NewFlex().
- *      SetDirection(tview.FlexRow).
- *      AddItem(nil, 0, 1, false).
- *      AddItem(buttonGrid, 7, 0, true).
- *      AddItem(nil, 0, 1, false), 30, 1, true).
- *    AddItem(nil, 0, 1, false)
- *
- *  return centeredButtons
- *}
- */
 
 func seekButtons(state MainState) (*tview.Flex, *tview.TextView) {
 	btn := func(label string, action UIOutput) *tview.Button {
@@ -195,4 +184,35 @@ func seekButtons(state MainState) (*tview.Flex, *tview.TextView) {
 		AddItem(centeredButtons, 0, 1, true)
 
 	return layout, seekTitle
+}
+
+func seekingPage(state MainState) *tview.Flex {
+	// Title text
+	title := tview.NewTextView().
+		SetText("Seeking game...").
+		SetTextAlign(tview.AlignCenter)
+
+	// Cancel button
+	cancelButton := tview.NewButton("Cancel").SetSelectedFunc(func() {
+		state.UIState.Output <- CancelSeek
+	})
+
+	// Vertical layout: title + spacing + button
+	content := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(title, 2, 0, false).
+		AddItem(tview.NewBox(), 1, 0, false). // spacer
+		AddItem(cancelButton, 3, 0, false)
+
+	// Center the content vertically and horizontally
+	centered := tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(tview.NewFlex().
+			SetDirection(tview.FlexRow).
+			AddItem(nil, 0, 1, false).
+			AddItem(content, 0, 1, false).
+			AddItem(nil, 0, 1, false), 30, 1, true).
+		AddItem(nil, 0, 1, false)
+
+	return centered
 }
