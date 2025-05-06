@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/notnil/chess"
 	"github.com/rivo/tview"
 )
 
@@ -45,12 +47,6 @@ func runUI(state MainState) {
 
 	seekingPage := seekingPage(state)
 
-	// DEBUG
-	go func() {
-		time.Sleep(1 * time.Second)
-		state.UIState.Input <- Seeking
-	}()
-
 	pages := tview.NewPages().
 		AddPage("seek", seekButtons, true, true).
 		AddPage("seeking", seekingPage, true, false).
@@ -60,6 +56,38 @@ func runUI(state MainState) {
 	go func() {
 		for {
 			select {
+			case <-time.Tick(200 * time.Millisecond):
+				// update clock display if we are playing
+				if state.Game.GameId == "" {
+					break
+				}
+				app.QueueUpdateDraw(func() {
+					var toUpdateWithElapsed *tview.TextView
+					var toUpdateWithFixed *tview.TextView
+
+					if state.Game.IsMyTurn() {
+						toUpdateWithElapsed = playerClock
+						toUpdateWithFixed = opponentClock
+					} else {
+						toUpdateWithElapsed = opponentClock
+						toUpdateWithFixed = playerClock
+					}
+
+					var fromTime int
+					var fixedTime int
+					if state.Game.CurrentTurn() == chess.White {
+						fromTime = state.Game.Wtime
+						fixedTime = state.Game.Btime
+					} else {
+						fromTime = state.Game.Btime
+						fixedTime = state.Game.Wtime
+					}
+
+					elapsed := displayTimeElapsed(state.Game.ClockUpdatedAt, fromTime)
+					toUpdateWithElapsed.SetText(elapsed)
+					toUpdateWithFixed.SetText(displayTime(fixedTime))
+
+				})
 			case input := <-state.UIState.Input:
 				log.Printf("UI Received input: %s", input.String())
 				switch input {
@@ -215,4 +243,20 @@ func seekingPage(state MainState) *tview.Flex {
 		AddItem(nil, 0, 1, false)
 
 	return centered
+}
+
+func displayTimeElapsed(clockUpdatedAt time.Time, wbTime int) string {
+	elapsed := int(time.Since(clockUpdatedAt).Seconds())
+	remaining := wbTime - elapsed
+
+	return "🟢 " + displayTime(remaining)
+
+}
+
+func displayTime(secs int) string {
+
+	minutes := secs / 60
+	seconds := secs % 60
+
+	return fmt.Sprintf("%02d:%02d", minutes, seconds)
 }

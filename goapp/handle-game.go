@@ -82,25 +82,12 @@ func handleGame(state MainState) {
 		case <-state.BoardNotifs:
 			updateLitSquares(state)
 			board.sendLEDCommand(state.LitSquares)
-			if isMyTurn(state) {
+			if state.Game.IsMyTurn() {
 				move := findValidMove(state)
 				PlayWithDelay(state, move, true)
 			}
 		}
 	}
-}
-
-func isMyTurn(state MainState) bool {
-	moveLen := len(state.Game.Moves)
-	var currentTurn string
-
-	if moveLen%2 == 0 {
-		currentTurn = "white"
-	} else {
-		currentTurn = "black"
-	}
-
-	return currentTurn == state.Game.Color
 }
 
 func findValidMove(state MainState) string {

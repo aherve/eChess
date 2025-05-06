@@ -18,17 +18,42 @@ func main() {
 	// Init state
 	state := NewMainState()
 
-	// Connect board
-	for !state.Board.Connected {
-		log.Println("Waiting for a board connection...")
-		state.Board.Connect(state.BoardNotifs)
-		time.Sleep(500 * time.Millisecond)
-	}
+	/*
+	 *  // Connect board
+	 *  for !state.Board.Connected {
+	 *    log.Println("Waiting for a board connection...")
+	 *    state.Board.Connect(state.BoardNotifs)
+	 *    time.Sleep(500 * time.Millisecond)
+	 *  }
+	 *
+	 *  // Run backend
+	 *  go runBackend(state)
+	 */
 
-	// Run backend
-	go runBackend(state)
+	stubState(state)
 
 	// Run the UI
 	runUI(state)
+
+}
+
+func stubState(state MainState) {
+	state.Game.ClockUpdatedAt = time.Now()
+	state.Game.Wtime = 300
+	state.Game.Btime = 300
+	state.Game.GameId = "stub"
+	state.Game.Color = "white"
+	state.Game.Moves = []string{"e2e4", "e7e5"}
+	state.Game.Opponent.Username = "some patzer"
+	state.Game.Opponent.Rating = 2100
+	go func() {
+		state.UIState.Input <- GameStarted
+		time.Sleep(10 * time.Second)
+		state.Game.Wtime = 305
+		state.Game.Btime = 300
+		state.Game.ClockUpdatedAt = time.Now()
+		state.Game.GameId = "stub"
+		state.Game.Moves = []string{"e2e4", "e7e5", "g1f3"}
+	}()
 
 }

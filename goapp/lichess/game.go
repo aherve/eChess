@@ -4,6 +4,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/notnil/chess"
 )
 
 type Game struct {
@@ -60,4 +62,25 @@ func (game *Game) Update(newState GameStateEvent) {
 		}
 	}
 	game.Moves = newMoves
+}
+
+func (game Game) CurrentTurn() chess.Color {
+	moveLen := len(game.Moves)
+	if moveLen%2 == 0 {
+		return chess.White
+	} else {
+		return chess.Black
+	}
+}
+
+func (game Game) IsMyTurn() bool {
+
+	currentTurn := game.CurrentTurn()
+	if currentTurn == chess.White && game.Color == "white" {
+		return true
+	}
+	if currentTurn == chess.Black && game.Color == "black" {
+		return true
+	}
+	return false
 }
