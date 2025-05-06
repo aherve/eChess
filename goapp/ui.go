@@ -14,6 +14,8 @@ import (
 func runUI(state MainState) {
 	go emitActions(state)
 
+	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
+
 	app := tview.NewApplication()
 	seekButtons, seekTitle := seekButtons(state)
 
