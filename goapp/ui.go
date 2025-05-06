@@ -18,7 +18,6 @@ func runUI(state MainState) {
 	seekButtons, seekTitle := seekButtons(state)
 
 	playerName := tview.NewTextView().
-		SetText("You Play " + state.Game.Color).
 		SetTextAlign(tview.AlignLeft)
 
 	playerClock := tview.NewTextView().
@@ -95,6 +94,7 @@ func runUI(state MainState) {
 					}
 
 					elapsed := displayTimeElapsed(state.Game.ClockUpdatedAt, fromTime)
+					log.Println("Elapsed time: ", elapsed)
 					toUpdateWithElapsed.SetText(elapsed)
 					toUpdateWithFixed.SetText(displayTime(fixedTime))
 
@@ -108,6 +108,7 @@ func runUI(state MainState) {
 						pages.HidePage("seeking")
 						pages.ShowPage("play")
 						opponentName.SetText(getOpponentText(*state.Game))
+						playerName.SetText("You play " + state.Game.Color)
 					})
 				case GameWon:
 					app.QueueUpdateDraw(func() {
@@ -275,17 +276,19 @@ func btnActions(c chan UIOutput) *tview.Flex {
 }
 
 func displayTimeElapsed(clockUpdatedAt time.Time, wbTime int) string {
-	elapsed := int(time.Since(clockUpdatedAt).Seconds())
+	elapsed := int(time.Since(clockUpdatedAt).Milliseconds())
 	remaining := wbTime - elapsed
 
 	return "🟢 " + displayTime(remaining)
 
 }
 
-func displayTime(secs int) string {
+func displayTime(millis int) string {
 
-	minutes := secs / 60
-	seconds := secs % 60
+	timeInSeconds := millis / 1000
+
+	minutes := timeInSeconds / 60
+	seconds := timeInSeconds % 60
 
 	return fmt.Sprintf("%02d:%02d", minutes, seconds)
 }
