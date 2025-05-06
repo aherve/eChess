@@ -211,7 +211,7 @@ func seekButtons(state MainState) (*tview.Flex, *tview.TextView) {
 	// Vertically center only the buttons
 	centeredButtons := tview.NewFlex().
 		AddItem(nil, 0, 1, false).
-		AddItem(buttonGrid, 0, 1, true).
+		AddItem(buttonGrid, 0, 2, true).
 		AddItem(nil, 0, 1, false)
 
 	// Final layout: Title at top, some space, buttons centered
@@ -296,8 +296,6 @@ func getOpponentText(g lichess.Game) string {
 func makeBtn(label string, action UIOutput, c chan UIOutput) *tview.Button {
 	btn := tview.NewButton(label).
 		SetSelectedFunc(func() { c <- action })
-
-	btn.SetBorderPadding(1, 1, 1, 1)
 
 	return btn
 }

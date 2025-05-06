@@ -6,8 +6,6 @@ import (
 	"time"
 )
 
-const DEBUG = false
-
 func main() {
 	// Setup logger
 	f, err := os.OpenFile("/tmp/echess.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
@@ -20,8 +18,10 @@ func main() {
 	// Init state
 	state := NewMainState()
 
-	if DEBUG {
+	debug := os.Getenv("DEBUG") == "true"
+	if debug {
 		// make a false state
+		log.Println("Running in debug mode")
 		stubState(state)
 	} else {
 		// Connect board
