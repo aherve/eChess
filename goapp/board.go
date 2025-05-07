@@ -26,48 +26,45 @@ func NewBoard() *Board {
 	}
 }
 
-func (b Board) Connected() bool {
+func (b *Board) Connected() bool {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
 	return b.connected
 }
 
-func (b Board) State() BoardState {
+func (b *Board) State() BoardState {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
 	return b.state
 }
 
-func (board *Board) Update(squares BoardState) {
-	board.mu.Lock()
-	defer board.mu.Unlock()
+func (b *Board) Update(squares BoardState) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
 	for i := range squares {
 		for j := range squares[i] {
-			board.state[i][j] = squares[i][j]
+			b.state[i][j] = squares[i][j]
 		}
 	}
 }
 
-func (board Board) Port() serial.Port {
-	board.mu.RLock()
-	defer board.mu.RUnlock()
+func (b *Board) Port() serial.Port {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
 
-	return board.port
+	return b.port
 }
 
-func (board *Board) Listen(c chan bool) {
-	if !board.Connected() {
-		log.Fatal("Board is not connected!")
-	}
+func (b *Board) Listen(c chan bool) {
 
 	buff := []byte{}
 	time.Sleep(1 * time.Second)
 	for {
 		newData := make([]byte, 128)
-		n, err := board.Port().Read(newData)
+		n, err := b.Port().Read(newData)
 		if err != nil {
 			log.Fatalf("Error while reading from port: %v", err)
 			break
@@ -88,7 +85,7 @@ func (board *Board) Listen(c chan bool) {
 				copy(msg[:], buff[i-18:i-2])
 				squares := buildSquares(msg)
 
-				board.Update(squares)
+				b.Update(squares)
 
 				c <- true
 				if len(buff) > i+1 {
@@ -102,9 +99,7 @@ func (board *Board) Listen(c chan bool) {
 	}
 }
 
-func (board *Board) Connect(c chan bool) {
-	board.mu.Lock()
-	defer board.mu.Unlock()
+func (b *Board) Connect(c chan bool) {
 
 	okPortPrefixes := []string{"/dev/ttyUSB0", "/dev/tty.usbserial", "/dev/cu.usbserial"}
 
@@ -129,10 +124,13 @@ func (board *Board) Connect(c chan bool) {
 					log.Fatalf("Error while opening port: %v", err)
 				}
 
-				board.connected = true
-				board.port = port
+				b.mu.Lock()
+				b.connected = true
+				b.port = port
+				b.mu.Unlock()
+
+				go b.Listen(c)
 				log.Println("Connected to board on port", portName)
-				go board.Listen(c)
 				return
 			}
 		}
@@ -140,9 +138,9 @@ func (board *Board) Connect(c chan bool) {
 	}
 }
 
-func (board *Board) sendLEDCommand(litSquares map[int8]bool) {
-	board.mu.Lock()
-	defer board.mu.Unlock()
+func (b *Board) sendLEDCommand(litSquares map[int8]bool) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
 
 	command := make([]byte, len(litSquares)+2)
 	command[0] = 0xFE
@@ -155,11 +153,10 @@ func (board *Board) sendLEDCommand(litSquares map[int8]bool) {
 		pos++
 	}
 
-	_, err := board.port.Write(command)
+	_, err := b.port.Write(command)
 	if err != nil {
 		log.Fatalf("Error while writing to port: %v", err)
 	}
-
 }
 
 func buildSquares(evt BoardEvent) BoardState {

@@ -8,7 +8,7 @@ import (
 	"github.com/notnil/chess"
 )
 
-const PLAY_DELAY = 250 * time.Millisecond
+const PlayDelay = 250 * time.Millisecond
 
 func runBackend(state MainState) {
 
@@ -44,9 +44,9 @@ func handleGame(state MainState) {
 	go state.PlayStartSequence()
 
 	chans := lichess.NewLichessEventChans()
-	if game.FullID() != "" {
-		log.Println("starting streaming game", game.FullID, " You play as ", game.Color)
-		go lichess.StreamGame(game.FullID(), chans)
+	if gameID := game.FullID(); gameID != "" {
+		log.Printf("Starting streaming game %s, you play as %s\n", gameID, game.Color())
+		go lichess.StreamGame(gameID, chans)
 	}
 
 	for {
@@ -62,7 +62,7 @@ func handleGame(state MainState) {
 			game.Update(evt)
 			state.UpdateLitSquares()
 			board.sendLEDCommand(state.LitSquares)
-			log.Println("Game updated", game.Moves)
+			log.Println("Game updated", game.Moves())
 		case <-chans.GameEnded:
 			log.Printf("Game ended")
 			go state.PlayEndSequence()
@@ -169,7 +169,7 @@ func PlayWithDelay(state MainState, move string, allowSchedule bool) {
 			// Recursive call after a delay (play only, do not re-schedule it in case it changed)
 			if move != "" {
 				go func() {
-					time.Sleep(PLAY_DELAY + time.Millisecond)
+					time.Sleep(PlayDelay + time.Millisecond)
 					PlayWithDelay(state, move, false)
 				}()
 			}
@@ -181,7 +181,7 @@ func PlayWithDelay(state MainState, move string, allowSchedule bool) {
 
 	} else {
 		// move == existing
-		if time.Since(state.CandidateMove.IssuedAt()) < PLAY_DELAY {
+		if time.Since(state.CandidateMove.IssuedAt()) < PlayDelay {
 			// too soon
 			return
 		}
