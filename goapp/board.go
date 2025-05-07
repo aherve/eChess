@@ -65,7 +65,8 @@ func (board *Board) Listen(c chan bool) {
 		log.Fatal("Board is not connected!")
 	}
 
-	buff := []byte{}
+	const maxBufferSize = 1024 // Maximum size of the buffer in bytes
+	buff := make([]byte, 0, maxBufferSize)
 	time.Sleep(1 * time.Second)
 	for {
 		newData := make([]byte, 128)
@@ -74,6 +75,18 @@ func (board *Board) Listen(c chan bool) {
 			log.Fatalf("Error while reading from port: %v", err)
 			break
 		}
+
+		// If adding new data would exceed maxBufferSize, remove old data
+		if len(buff)+n > maxBufferSize {
+			// Keep only the last maxBufferSize/2 bytes
+			keepFrom := len(buff) - maxBufferSize/2
+			if keepFrom < 0 {
+				keepFrom = 0
+			}
+			buff = buff[keepFrom:]
+			log.Printf("Buffer overflow, trimming to %d bytes", len(buff))
+		}
+
 		buff = append(buff, newData[:n]...)
 		if len(buff) < 19 {
 			continue
@@ -101,7 +114,6 @@ func (board *Board) Listen(c chan bool) {
 				break
 			}
 		}
-
 	}
 }
 

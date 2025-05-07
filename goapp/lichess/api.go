@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
+	"time"
 )
 
 type secretFile struct {
@@ -163,8 +165,19 @@ func lichessFetch(ctx context.Context, path string, params map[string]string, me
 		lichessURL += "?" + buildURLParams(params)
 	}
 
-	// Create a new HTTP client
-	client := &http.Client{}
+	// Create a new HTTP client with timeouts
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+			}).DialContext,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ResponseHeaderTimeout: 10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		},
+	}
 
 	// Create a new request
 	var req *http.Request
@@ -221,6 +234,11 @@ func StreamGame(gameId string, chans *LichessEventChans) {
 	defer body.Close()
 
 	scanner := bufio.NewScanner(body)
+	// Increase scanner buffer size to handle larger messages
+	const maxScanTokenSize = 1024 * 1024 // 1MB
+	buf := make([]byte, maxScanTokenSize)
+	scanner.Buffer(buf, maxScanTokenSize)
+
 	for scanner.Scan() {
 		line := scanner.Bytes()
 		if len(line) == 0 {
@@ -274,7 +292,6 @@ func StreamGame(gameId string, chans *LichessEventChans) {
 		default:
 			log.Printf("Unknown event type: %s", withType.Type)
 		}
-
 	}
 
 	if err := scanner.Err(); err != nil {
@@ -283,7 +300,6 @@ func StreamGame(gameId string, chans *LichessEventChans) {
 	}
 
 	chans.GameEnded <- true
-
 }
 
 func ClaimVictory(gameId string) {
