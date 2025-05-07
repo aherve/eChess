@@ -10,7 +10,7 @@ import (
 
 const PlayDelay = 250 * time.Millisecond
 
-func runBackend(state MainState) {
+func runBackend(state *MainState) {
 
 	state.Board().sendLEDCommand(state.LitSquares())
 	for state.Game().FullID() == "" {
@@ -27,20 +27,20 @@ func runBackend(state MainState) {
 
 		if state.Game().FullID() == "" {
 			log.Println("No game found. Will try again in 3 seconds...")
-			state.UIState().Input() <- NoCurrentGame
+			state.UIState().Input <- NoCurrentGame
 			time.Sleep(3 * time.Second)
 			continue
 		}
 	}
 }
 
-func handleGame(state MainState) {
+func handleGame(state *MainState) {
 	game := state.Game()
 	board := state.Board()
 
 	log.Println("Game ID:", game.FullID(), "You are playing as", game.Color())
 
-	state.UIState().Input() <- GameStarted
+	state.UIState().Input <- GameStarted
 	go state.PlayStartSequence()
 
 	chans := lichess.NewLichessEventChans()
@@ -68,11 +68,11 @@ func handleGame(state MainState) {
 			go state.PlayEndSequence()
 
 			if game.Winner() == game.Color() {
-				state.UIState().Input() <- GameWon
+				state.UIState().Input <- GameWon
 			} else if game.Winner() != "" {
-				state.UIState().Input() <- GameLost
+				state.UIState().Input <- GameLost
 			} else {
-				state.UIState().Input() <- GameDrawn
+				state.UIState().Input <- GameDrawn
 			}
 
 			state.Game().Reset()
@@ -90,7 +90,7 @@ func handleGame(state MainState) {
 	}
 }
 
-func findValidMove(state MainState) string {
+func findValidMove(state *MainState) string {
 	// must have 2 changes exactly
 	if len(state.LitSquares()) != 2 {
 		return ""
@@ -149,7 +149,7 @@ func NewChessGameFromMoves(moves []string) *chess.Game {
 	return g
 }
 
-func PlayWithDelay(state MainState, move string, allowSchedule bool) {
+func PlayWithDelay(state *MainState, move string, allowSchedule bool) {
 
 	// If provided with a new move, then we record it
 	existing := state.CandidateMove().Move()

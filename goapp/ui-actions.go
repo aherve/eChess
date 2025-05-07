@@ -45,11 +45,11 @@ func (o UIOutput) String() string {
 	}
 }
 
-func emitActions(state MainState) {
+func emitActions(state *MainState) {
 
 	for {
 		select {
-		case output := <-state.UIState().Output():
+		case output := <-state.UIState().Output:
 			switch output {
 			case Seek105:
 				state.UIState().CreateSeek("10", "5")
@@ -62,15 +62,8 @@ func emitActions(state MainState) {
 			case Seek3030:
 				state.UIState().CreateSeek("30", "30")
 			case CancelSeek:
-				log.Println("Canceling seek")
-				if state.UIState().cancelSeek != nil {
-					(*state.UIState().cancelSeek)()
-					state.UIState().cancelSeek = nil
-					log.Println("Seek cancelled")
-				} else {
-					log.Println("No seek to cancel")
-				}
-				state.UIState().Input() <- StopSeeking
+				state.UIState().CancelSeek()
+				state.UIState().Input <- StopSeeking
 			case Resign:
 				if gameID := state.Game().FullID(); gameID != "" {
 					lichess.ResignGame(gameID)

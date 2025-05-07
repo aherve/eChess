@@ -10,37 +10,39 @@ import (
 )
 
 type UIState struct {
-	input      chan UIInput
-	output     chan UIOutput
-	cancelSeek *context.CancelFunc
+	Input  chan UIInput
+	Output chan UIOutput
 
-	mu sync.RWMutex
+	cancelSeek *context.CancelFunc
+	mu         sync.Mutex
 }
 
 func NewUIState() *UIState {
 	return &UIState{
-		input:  make(chan UIInput),
-		output: make(chan UIOutput),
+		Input:  make(chan UIInput),
+		Output: make(chan UIOutput),
 	}
 }
 
-func (s *UIState) Input() chan UIInput {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.input
-}
+func (s *UIState) CancelSeek() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-func (s *UIState) Output() chan UIOutput {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.output
+	if s.cancelSeek != nil {
+		(*s.cancelSeek)()
+		s.cancelSeek = nil
+		log.Println("Seek cancelled")
+	} else {
+		log.Println("No seek to cancel")
+	}
+
 }
 
 func (s *UIState) CreateSeek(gameTime, increment string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.input <- Seeking
+	s.Input <- Seeking
 
 	if existingCancel := s.cancelSeek; existingCancel != nil {
 		log.Println("Canceling previous seek")

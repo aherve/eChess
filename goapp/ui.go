@@ -11,7 +11,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-func runUI(state MainState) {
+func runUI(state *MainState) {
 	go emitActions(state)
 
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
@@ -34,7 +34,7 @@ func runUI(state MainState) {
 
 	// Opponent info
 	opponentName := tview.NewTextView().
-		SetText(getOpponentText(*state.Game())).
+		SetText(getOpponentText(state.Game())).
 		SetTextAlign(tview.AlignLeft)
 
 	opponentClock := tview.NewTextView().
@@ -49,7 +49,7 @@ func runUI(state MainState) {
 
 	middleBar.SetBorder(true)
 
-	bottomBar := btnActions(state.UIState().Output())
+	bottomBar := btnActions(state.UIState().Output)
 
 	playLayout := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(topBar, 5, 0, false).
@@ -100,7 +100,7 @@ func runUI(state MainState) {
 					toUpdateWithFixed.SetText(displayTime(fixedTime))
 
 				})
-			case input := <-state.UIState().Input():
+			case input := <-state.UIState().Input:
 				log.Printf("UI Received input: %s", input.String())
 				switch input {
 				case GameStarted:
@@ -108,7 +108,7 @@ func runUI(state MainState) {
 						pages.HidePage("seek")
 						pages.HidePage("seeking")
 						pages.ShowPage("play")
-						opponentName.SetText(getOpponentText(*state.Game()))
+						opponentName.SetText(getOpponentText(state.Game()))
 						playerName.SetText("You play " + state.Game().Color())
 					})
 				case GameWon:
@@ -182,18 +182,18 @@ func runUI(state MainState) {
 
 }
 
-func seekButtons(state MainState) (*tview.Flex, *tview.TextView) {
+func seekButtons(state *MainState) (*tview.Flex, *tview.TextView) {
 
 	// Rows with horizontal spacing
 	row1 := tview.NewFlex().
-		AddItem(makeBtn("15|10", Seek1510, state.UIState().Output()), 0, 1, false).
+		AddItem(makeBtn("15|10", Seek1510, state.UIState().Output), 0, 1, false).
 		AddItem(tview.NewBox(), 1, 0, false).
-		AddItem(makeBtn("15|30", Seek1530, state.UIState().Output()), 0, 1, false)
+		AddItem(makeBtn("15|30", Seek1530, state.UIState().Output), 0, 1, false)
 
 	row2 := tview.NewFlex().
-		AddItem(makeBtn("30|20", Seek3020, state.UIState().Output()), 0, 1, false).
+		AddItem(makeBtn("30|20", Seek3020, state.UIState().Output), 0, 1, false).
 		AddItem(tview.NewBox(), 1, 0, false).
-		AddItem(makeBtn("30|30", Seek3030, state.UIState().Output()), 0, 1, false)
+		AddItem(makeBtn("30|30", Seek3030, state.UIState().Output), 0, 1, false)
 
 	// Grid of buttons with vertical spacing
 	buttonGrid := tview.NewFlex().
@@ -223,7 +223,7 @@ func seekButtons(state MainState) (*tview.Flex, *tview.TextView) {
 	return layout, seekTitle
 }
 
-func seekingPage(state MainState) *tview.Flex {
+func seekingPage(state *MainState) *tview.Flex {
 	// Title text
 	title := tview.NewTextView().
 		SetText("Seeking game...").
@@ -231,7 +231,7 @@ func seekingPage(state MainState) *tview.Flex {
 
 	// Cancel button
 	cancelButton := tview.NewButton("Cancel").SetSelectedFunc(func() {
-		state.UIState().Output() <- CancelSeek
+		state.UIState().Output <- CancelSeek
 	})
 
 	// Vertical layout: title + spacing + button
@@ -289,7 +289,7 @@ func displayTime(millis int) string {
 	return fmt.Sprintf("%02d:%02d", minutes, seconds)
 }
 
-func getOpponentText(g lichess.Game) string {
+func getOpponentText(g *lichess.Game) string {
 	opponent := g.Opponent()
 	return fmt.Sprintf("%s (%d)", opponent.Username, opponent.Rating)
 }

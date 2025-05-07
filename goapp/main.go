@@ -39,7 +39,7 @@ func main() {
 
 }
 
-func stubState(state MainState) {
+func stubState(state *MainState) {
 	/*
 	 *state.Game.clockUpdatedAt = time.Now()
 	 *state.Game.wtime = 300

@@ -27,49 +27,49 @@ func NewGame() *Game {
 	}
 }
 
-func (g Game) Opponent() *Opponent {
+func (g *Game) Opponent() *Opponent {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 	return g.opponent
 }
 
-func (g Game) FullID() string {
+func (g *Game) FullID() string {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 	return g.fullID
 }
 
-func (g Game) Wtime() int {
+func (g *Game) Wtime() int {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 	return g.wtime
 }
 
-func (g Game) Btime() int {
+func (g *Game) Btime() int {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 	return g.btime
 }
 
-func (g Game) ClockUpdatedAt() time.Time {
+func (g *Game) ClockUpdatedAt() time.Time {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 	return g.clockUpdatedAt
 }
 
-func (g Game) Color() string {
+func (g *Game) Color() string {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 	return g.color
 }
 
-func (g Game) Moves() []string {
+func (g *Game) Moves() []string {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 	return g.moves
 }
 
-func (g Game) Winner() string {
+func (g *Game) Winner() string {
 	g.mu.RLock()
 	defer g.mu.RUnlock()
 	return g.winner
@@ -124,7 +124,7 @@ func (game *Game) Update(newState GameStateEvent) {
 	game.moves = newMoves
 }
 
-func (game Game) CurrentTurn() chess.Color {
+func (game *Game) CurrentTurn() chess.Color {
 	moveLen := len(game.Moves())
 	if moveLen%2 == 0 {
 		return chess.White
@@ -133,7 +133,7 @@ func (game Game) CurrentTurn() chess.Color {
 	}
 }
 
-func (game Game) IsMyTurn() bool {
+func (game *Game) IsMyTurn() bool {
 
 	currentTurn := game.CurrentTurn()
 	if currentTurn == chess.White && game.Color() == "white" {

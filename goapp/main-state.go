@@ -19,8 +19,8 @@ type MainState struct {
 	mu sync.RWMutex
 }
 
-func NewMainState() MainState {
-	return MainState{
+func NewMainState() *MainState {
+	return &MainState{
 		board:         NewBoard(),
 		boardNotifs:   make(chan bool),
 		game:          lichess.NewGame(),
@@ -31,12 +31,14 @@ func NewMainState() MainState {
 }
 
 func (s *MainState) Board() *Board {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	/*
+	 *s.mu.RLock()
+	 *defer s.mu.RUnlock()
+	 */
 	return s.board
 }
 
-func (s MainState) ResetLitSquares() {
+func (s *MainState) ResetLitSquares() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -47,20 +49,26 @@ func (s MainState) ResetLitSquares() {
 }
 
 func (s *MainState) BoardNotifs() chan bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	/*
+	 *s.mu.RLock()
+	 *defer s.mu.RUnlock()
+	 */
 	return s.boardNotifs
 }
 
 func (s *MainState) CandidateMove() *CandidateMove {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	/*
+	 *s.mu.RLock()
+	 *defer s.mu.RUnlock()
+	 */
 	return s.candidateMove
 }
 
 func (s *MainState) Game() *lichess.Game {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	/*
+	 *s.mu.RLock()
+	 *defer s.mu.RUnlock()
+	 */
 	return s.game
 }
 
@@ -71,8 +79,10 @@ func (s *MainState) LitSquares() map[int8]bool {
 }
 
 func (s *MainState) UIState() *UIState {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
+	/*
+	 *s.mu.RLock()
+	 *defer s.mu.RUnlock()
+	 */
 	return s.uIState
 }
 
@@ -121,7 +131,7 @@ func (state *MainState) PlayEndSequence() {
 
 }
 
-func (state MainState) PlayStartSequence() {
+func (state *MainState) PlayStartSequence() {
 
 	period := 20 * time.Millisecond
 	seq := []int8{

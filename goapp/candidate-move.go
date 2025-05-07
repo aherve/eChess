@@ -18,14 +18,14 @@ func NewCandidateMove() *CandidateMove {
 	}
 }
 
-func (c CandidateMove) Move() string {
+func (c *CandidateMove) Move() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	return c.move
 }
 
-func (c CandidateMove) IssuedAt() time.Time {
+func (c *CandidateMove) IssuedAt() time.Time {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 

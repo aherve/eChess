@@ -67,7 +67,6 @@ func (b *Board) Listen(c chan bool) {
 		n, err := b.Port().Read(newData)
 		if err != nil {
 			log.Fatalf("Error while reading from port: %v", err)
-			break
 		}
 		buff = append(buff, newData[:n]...)
 		if len(buff) < 19 {
