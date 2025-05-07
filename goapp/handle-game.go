@@ -84,23 +84,26 @@ func handleGame(state *MainState) {
 			board.sendLEDCommand(state.LitSquares())
 			if state.Game().IsMyTurn() {
 				move := findValidMove(state)
-				PlayWithDelay(state, move, true)
+				state.CandidateMove().PlayWithDelay(state.Game().FullID(), move)
 			}
 		}
 	}
 }
 
 func findValidMove(state *MainState) string {
+	litSquares := state.LitSquares()
+	boardState := state.Board().State()
+
 	// must have 2 changes exactly
-	if len(state.LitSquares()) != 2 {
+	if len(litSquares) != 2 {
 		return ""
 	}
 
 	source := ""
 	dest := ""
-	for k := range state.LitSquares() {
+	for k := range litSquares {
 		i, j := getCoordinatesFromIndex(k)
-		boardColor := state.Board().State()[i][j]
+		boardColor := boardState[i][j]
 
 		// piece missing => has to be the source square
 		if boardColor == chess.NoColor {
@@ -147,43 +150,4 @@ func NewChessGameFromMoves(moves []string) *chess.Game {
 		}
 	}
 	return g
-}
-
-func PlayWithDelay(state *MainState, move string, allowSchedule bool) {
-
-	// If provided with a new move, then we record it
-	existing := state.CandidateMove().Move()
-
-	if move != existing {
-
-		if allowSchedule {
-			state.CandidateMove().Set(move)
-
-			// Recursive call after a delay (play only, do not re-schedule it in case it changed)
-			if move != "" {
-				go func() {
-					time.Sleep(PlayDelay + time.Millisecond)
-					PlayWithDelay(state, move, false)
-				}()
-			}
-			return
-		} else {
-			// Move has changed during the cooldown period => abort
-			return
-		}
-
-	} else {
-		// move == existing
-		if time.Since(state.CandidateMove().IssuedAt()) < PlayDelay {
-			// too soon
-			return
-		}
-
-		// Play the move
-		if move != "" {
-			lichess.PlayMove(state.Game().FullID(), move)
-			state.CandidateMove().Reset()
-		}
-	}
-
 }

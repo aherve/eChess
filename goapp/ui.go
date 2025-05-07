@@ -30,7 +30,7 @@ func runUI(state *MainState) {
 		AddItem(playerClock, 10, 0, false)
 
 	topBar.SetBorder(true)
-	topBar.SetBorderPadding(1, 1, 5, 5)
+	topBar.SetBorderPadding(1, 1, 2, 2)
 
 	// Opponent info
 	opponentName := tview.NewTextView().
@@ -45,7 +45,7 @@ func runUI(state *MainState) {
 		AddItem(opponentClock, 10, 0, false)
 
 	middleBar.SetBorder(true)
-	middleBar.SetBorderPadding(1, 1, 5, 5)
+	middleBar.SetBorderPadding(1, 1, 2, 2)
 
 	middleBar.SetBorder(true)
 
