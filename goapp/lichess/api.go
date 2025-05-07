@@ -257,7 +257,7 @@ func StreamGame(gameId string, chans *LichessEventChans) {
 			var gs GameStateEvent
 			err := json.Unmarshal(line, &gs)
 			if err != nil {
-				log.Printf("Error unmarshalling game state event: %v", err)
+				log.Fatalf("Error unmarshalling game state event: %v, %+v", err, string(line))
 				continue
 			}
 			chans.GameStateChan <- gs
@@ -266,7 +266,7 @@ func StreamGame(gameId string, chans *LichessEventChans) {
 			var gameFullEvent GameFullEvent
 			err := json.Unmarshal(line, &gameFullEvent)
 			if err != nil {
-				log.Printf("Error unmarshalling game full event: %v", err)
+				log.Fatalf("Error unmarshalling game full event: %v, %+v", err, string(line))
 				continue
 			}
 			chans.GameStateChan <- gameFullEvent.State
