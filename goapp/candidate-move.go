@@ -8,9 +8,10 @@ import (
 )
 
 type CandidateMove struct {
-	move     string
-	issuedAt time.Time
-	mu       sync.RWMutex
+	move           string
+	issuedAt       time.Time
+	lastMovePlayed string
+	mu             sync.RWMutex
 }
 
 func NewCandidateMove() *CandidateMove {
@@ -54,6 +55,11 @@ func (cm *CandidateMove) recursivePlayWithDelay(gameID, move string, shouldSched
 	cm.mu.Lock()
 	defer cm.mu.Unlock()
 
+	// We don't schedule or play a move that has been played already
+	if move != "" && move == cm.lastMovePlayed {
+		return
+	}
+
 	existing := cm.move
 
 	// this is a new move, and we should schedule it
@@ -94,5 +100,6 @@ func (cm *CandidateMove) recursivePlayWithDelay(gameID, move string, shouldSched
 	// reset our state
 	cm.move = ""
 	cm.issuedAt = time.Now()
+	cm.lastMovePlayed = move
 
 }
