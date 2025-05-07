@@ -9,55 +9,100 @@ import (
 )
 
 type MainState struct {
-	Board         *Board
-	BoardNotifs   chan bool
-	CandidateMove *CandidateMove
-	Game          *lichess.Game
-	LitSquares    map[int8]bool
-	UIState       *UIState
+	board         *Board
+	boardNotifs   chan bool
+	candidateMove *CandidateMove
+	game          *lichess.Game
+	litSquares    map[int8]bool
+	uIState       *UIState
 
 	mu sync.RWMutex
 }
 
 func NewMainState() MainState {
 	return MainState{
-		Board:         NewBoard(),
-		BoardNotifs:   make(chan bool),
-		Game:          lichess.NewGame(),
-		LitSquares:    map[int8]bool{},
-		UIState:       NewUIState(),
-		CandidateMove: NewCandidateMove(),
+		board:         NewBoard(),
+		boardNotifs:   make(chan bool),
+		game:          lichess.NewGame(),
+		litSquares:    map[int8]bool{},
+		uIState:       NewUIState(),
+		candidateMove: NewCandidateMove(),
 	}
 }
 
+func (s *MainState) Board() *Board {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.board
+}
+
+func (s MainState) ResetLitSquares() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for k := range s.litSquares {
+		delete(s.litSquares, k)
+	}
+	s.board.sendLEDCommand(s.litSquares)
+}
+
+func (s *MainState) BoardNotifs() chan bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.boardNotifs
+}
+
+func (s *MainState) CandidateMove() *CandidateMove {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.candidateMove
+}
+
+func (s *MainState) Game() *lichess.Game {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.game
+}
+
+func (s *MainState) LitSquares() map[int8]bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.litSquares
+}
+
+func (s *MainState) UIState() *UIState {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.uIState
+}
+
 func (state *MainState) UpdateLitSquares() {
-
-	g := NewChessGameFromMoves(state.Game.Moves())
-
 	state.mu.Lock()
 	defer state.mu.Unlock()
+
+	g := NewChessGameFromMoves(state.game.Moves())
 
 	for i := range 8 {
 		for j := range 8 {
 			square := chess.NewSquare(chess.File(i), chess.Rank(j))
 
 			chessGameColor := g.Position().Board().Piece(square).Color()
-			boardColor := state.Board.State()[i][j]
+			boardColor := state.board.State()[i][j]
 			index := getIndexFromCoordinates(i, j)
 			value := chessGameColor != boardColor
 
 			// set to true if the square is lit, delete entry otherwise
 			if value {
-				state.LitSquares[index] = true
+				state.litSquares[index] = true
 			} else {
-				delete(state.LitSquares, index)
+				delete(state.litSquares, index)
 			}
 
 		}
 	}
 }
 
-func (state MainState) PlayEndSequence() {
+func (state *MainState) PlayEndSequence() {
 	period := 300 * time.Millisecond
 	localEmptyState := map[int8]bool{}
 
@@ -68,9 +113,9 @@ func (state MainState) PlayEndSequence() {
 	localLitState[int8(chess.D5)] = true
 
 	for range 3 {
-		state.Board.sendLEDCommand(localLitState)
+		state.Board().sendLEDCommand(localLitState)
 		time.Sleep(period)
-		state.Board.sendLEDCommand(localEmptyState)
+		state.Board().sendLEDCommand(localEmptyState)
 		time.Sleep(period)
 	}
 
@@ -100,20 +145,20 @@ func (state MainState) PlayStartSequence() {
 
 	first := map[int8]bool{}
 	first[seq[0]] = true
-	state.Board.sendLEDCommand(first)
+	state.Board().sendLEDCommand(first)
 	time.Sleep(period)
 	for i := 1; i < len(seq); i++ {
 		local := map[int8]bool{}
 		local[seq[i-1]] = true
 		local[seq[i]] = true
-		state.Board.sendLEDCommand(local)
+		state.Board().sendLEDCommand(local)
 		time.Sleep(period)
 	}
 
 	last := map[int8]bool{}
 	last[seq[len(seq)-1]] = true
-	state.Board.sendLEDCommand(first)
+	state.Board().sendLEDCommand(first)
 	time.Sleep(period)
 
-	state.Board.sendLEDCommand(state.LitSquares)
+	state.Board().sendLEDCommand(state.LitSquares())
 }

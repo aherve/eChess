@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"log"
-	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
 )
@@ -47,55 +45,42 @@ func (o UIOutput) String() string {
 	}
 }
 
-type UIState struct {
-	Input      chan UIInput
-	Output     chan UIOutput
-	cancelSeek *context.CancelFunc
-}
-
-func NewUIState() *UIState {
-	return &UIState{
-		Input:  make(chan UIInput),
-		Output: make(chan UIOutput),
-	}
-}
-
 func emitActions(state MainState) {
 
 	for {
 		select {
-		case output := <-state.UIState.Output:
+		case output := <-state.UIState().Output():
 			switch output {
 			case Seek105:
-				safeCreateSeek("10", "5", state)
+				state.UIState().CreateSeek("10", "5")
 			case Seek1510:
-				safeCreateSeek("15", "10", state)
+				state.UIState().CreateSeek("15", "10")
 			case Seek1530:
-				safeCreateSeek("15", "30", state)
+				state.UIState().CreateSeek("15", "30")
 			case Seek3020:
-				safeCreateSeek("30", "20", state)
+				state.UIState().CreateSeek("30", "20")
 			case Seek3030:
-				safeCreateSeek("30", "30", state)
+				state.UIState().CreateSeek("30", "30")
 			case CancelSeek:
 				log.Println("Canceling seek")
-				if state.UIState.cancelSeek != nil {
-					(*state.UIState.cancelSeek)()
-					state.UIState.cancelSeek = nil
+				if state.UIState().cancelSeek != nil {
+					(*state.UIState().cancelSeek)()
+					state.UIState().cancelSeek = nil
 					log.Println("Seek cancelled")
 				} else {
 					log.Println("No seek to cancel")
 				}
-				state.UIState.Input <- StopSeeking
+				state.UIState().Input() <- StopSeeking
 			case Resign:
-				if gameID := state.Game.FullID(); gameID != "" {
+				if gameID := state.Game().FullID(); gameID != "" {
 					lichess.ResignGame(gameID)
 				}
 			case Abort:
-				if gameId := state.Game.FullID(); gameId != "" {
+				if gameId := state.Game().FullID(); gameId != "" {
 					lichess.AbortGame(gameId)
 				}
 			case Draw:
-				if gameId := state.Game.FullID(); gameId != "" {
+				if gameId := state.Game().FullID(); gameId != "" {
 					lichess.DrawGame(gameId)
 				}
 			default:
@@ -103,18 +88,4 @@ func emitActions(state MainState) {
 			}
 		}
 	}
-}
-
-func safeCreateSeek(gameTime, increment string, state MainState) {
-	state.mu.Lock()
-	defer state.mu.Unlock()
-	state.UIState.Input <- Seeking
-	if state.UIState.cancelSeek != nil {
-		log.Println("Canceling previous seek")
-		(*state.UIState.cancelSeek)()
-		state.UIState.cancelSeek = nil
-		log.Println("Previous seek cancelled")
-		time.Sleep(200 * time.Millisecond) // don't spam lichess
-	}
-	state.UIState.cancelSeek = lichess.CreateSeek(gameTime, increment)
 }

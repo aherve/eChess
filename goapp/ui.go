@@ -34,7 +34,7 @@ func runUI(state MainState) {
 
 	// Opponent info
 	opponentName := tview.NewTextView().
-		SetText(getOpponentText(*state.Game)).
+		SetText(getOpponentText(*state.Game())).
 		SetTextAlign(tview.AlignLeft)
 
 	opponentClock := tview.NewTextView().
@@ -49,7 +49,7 @@ func runUI(state MainState) {
 
 	middleBar.SetBorder(true)
 
-	bottomBar := btnActions(state.UIState.Output)
+	bottomBar := btnActions(state.UIState().Output())
 
 	playLayout := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(topBar, 5, 0, false).
@@ -70,14 +70,14 @@ func runUI(state MainState) {
 			select {
 			case <-time.Tick(200 * time.Millisecond):
 				// update clock display if we are playing
-				if state.Game.FullID() == "" {
+				if state.Game().FullID() == "" {
 					break
 				}
 				app.QueueUpdateDraw(func() {
 					var toUpdateWithElapsed *tview.TextView
 					var toUpdateWithFixed *tview.TextView
 
-					if state.Game.IsMyTurn() {
+					if state.Game().IsMyTurn() {
 						toUpdateWithElapsed = playerClock
 						toUpdateWithFixed = opponentClock
 					} else {
@@ -87,20 +87,20 @@ func runUI(state MainState) {
 
 					var fromTime int
 					var fixedTime int
-					if state.Game.CurrentTurn() == chess.White {
-						fromTime = state.Game.Wtime()
-						fixedTime = state.Game.Btime()
+					if state.Game().CurrentTurn() == chess.White {
+						fromTime = state.Game().Wtime()
+						fixedTime = state.Game().Btime()
 					} else {
-						fromTime = state.Game.Btime()
-						fixedTime = state.Game.Wtime()
+						fromTime = state.Game().Btime()
+						fixedTime = state.Game().Wtime()
 					}
 
-					elapsed := displayTimeElapsed(state.Game.ClockUpdatedAt(), fromTime)
+					elapsed := displayTimeElapsed(state.Game().ClockUpdatedAt(), fromTime)
 					toUpdateWithElapsed.SetText(elapsed)
 					toUpdateWithFixed.SetText(displayTime(fixedTime))
 
 				})
-			case input := <-state.UIState.Input:
+			case input := <-state.UIState().Input():
 				log.Printf("UI Received input: %s", input.String())
 				switch input {
 				case GameStarted:
@@ -108,8 +108,8 @@ func runUI(state MainState) {
 						pages.HidePage("seek")
 						pages.HidePage("seeking")
 						pages.ShowPage("play")
-						opponentName.SetText(getOpponentText(*state.Game))
-						playerName.SetText("You play " + state.Game.Color())
+						opponentName.SetText(getOpponentText(*state.Game()))
+						playerName.SetText("You play " + state.Game().Color())
 					})
 				case GameWon:
 					app.QueueUpdateDraw(func() {
@@ -154,7 +154,7 @@ func runUI(state MainState) {
 				case StopSeeking:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("seeking")
-						if state.Game.FullID() != "" {
+						if state.Game().FullID() != "" {
 							pages.ShowPage("play")
 							pages.HidePage("seek")
 						} else {
@@ -186,14 +186,14 @@ func seekButtons(state MainState) (*tview.Flex, *tview.TextView) {
 
 	// Rows with horizontal spacing
 	row1 := tview.NewFlex().
-		AddItem(makeBtn("15|10", Seek1510, state.UIState.Output), 0, 1, false).
+		AddItem(makeBtn("15|10", Seek1510, state.UIState().Output()), 0, 1, false).
 		AddItem(tview.NewBox(), 1, 0, false).
-		AddItem(makeBtn("15|30", Seek1530, state.UIState.Output), 0, 1, false)
+		AddItem(makeBtn("15|30", Seek1530, state.UIState().Output()), 0, 1, false)
 
 	row2 := tview.NewFlex().
-		AddItem(makeBtn("30|20", Seek3020, state.UIState.Output), 0, 1, false).
+		AddItem(makeBtn("30|20", Seek3020, state.UIState().Output()), 0, 1, false).
 		AddItem(tview.NewBox(), 1, 0, false).
-		AddItem(makeBtn("30|30", Seek3030, state.UIState.Output), 0, 1, false)
+		AddItem(makeBtn("30|30", Seek3030, state.UIState().Output()), 0, 1, false)
 
 	// Grid of buttons with vertical spacing
 	buttonGrid := tview.NewFlex().
@@ -231,7 +231,7 @@ func seekingPage(state MainState) *tview.Flex {
 
 	// Cancel button
 	cancelButton := tview.NewButton("Cancel").SetSelectedFunc(func() {
-		state.UIState.Output <- CancelSeek
+		state.UIState().Output() <- CancelSeek
 	})
 
 	// Vertical layout: title + spacing + button
