@@ -87,15 +87,15 @@ func emitActions(state MainState) {
 				}
 				state.UIState.Input <- StopSeeking
 			case Resign:
-				if gameId := state.Game.FullID; gameId != "" {
+				if gameId := state.Game.FullID(); gameId != "" {
 					lichess.ResignGame(gameId)
 				}
 			case Abort:
-				if gameId := state.Game.FullID; gameId != "" {
+				if gameId := state.Game.FullID(); gameId != "" {
 					lichess.AbortGame(gameId)
 				}
 			case Draw:
-				if gameId := state.Game.FullID; gameId != "" {
+				if gameId := state.Game.FullID(); gameId != "" {
 					lichess.DrawGame(gameId)
 				}
 			default:

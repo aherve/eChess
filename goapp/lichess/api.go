@@ -114,18 +114,7 @@ func FindPlayingGame(lichessGame *Game) error {
 
 	if len(response.NowPlaying) > 0 {
 		found := response.NowPlaying[0]
-
-		lichessGame.mu.Lock()
-		lichessGame.FullID = found.FullID
-		lichessGame.GameId = found.GameId
-		lichessGame.Color = found.Color
-		//lichessGame.Fen = found.Fen
-		lichessGame.Opponent = found.Opponent
-		lichessGame.Moves = []string{}
-		lichessGame.Wtime = -1
-		lichessGame.Btime = -1
-
-		lichessGame.mu.Unlock()
+		lichessGame.UpdateFromFindGame(found)
 	}
 
 	return nil

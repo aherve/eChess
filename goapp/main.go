@@ -40,22 +40,24 @@ func main() {
 }
 
 func stubState(state MainState) {
-	state.Game.ClockUpdatedAt = time.Now()
-	state.Game.Wtime = 300
-	state.Game.Btime = 300
-	state.Game.GameId = ""
-	state.Game.Color = "white"
-	state.Game.Moves = []string{"e2e4", "e7e5"}
-	state.Game.Opponent.Username = "some patzer"
-	state.Game.Opponent.Rating = 2100
-	go func() {
-		state.UIState.Input <- GameLost
-		time.Sleep(10 * time.Second)
-		state.Game.Wtime = 305
-		state.Game.Btime = 300
-		state.Game.ClockUpdatedAt = time.Now()
-		state.Game.GameId = ""
-		state.Game.Moves = []string{"e2e4", "e7e5", "g1f3"}
-	}()
+	/*
+	 *state.Game.clockUpdatedAt = time.Now()
+	 *state.Game.wtime = 300
+	 *state.Game.btime = 300
+	 *state.Game.gameId = ""
+	 *state.Game.color = "white"
+	 *state.Game.moves = []string{"e2e4", "e7e5"}
+	 *state.Game.opponent.Username = "some patzer"
+	 *state.Game.opponent.Rating = 2100
+	 *go func() {
+	 *  state.UIState.Input <- GameLost
+	 *  time.Sleep(10 * time.Second)
+	 *  state.Game.wtime = 305
+	 *  state.Game.btime = 300
+	 *  state.Game.clockUpdatedAt = time.Now()
+	 *  state.Game.gameId = ""
+	 *  state.Game.moves = []string{"e2e4", "e7e5", "g1f3"}
+	 *}()
+	 */
 
 }

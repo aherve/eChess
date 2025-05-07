@@ -13,19 +13,19 @@ const PLAY_DELAY = 250 * time.Millisecond
 func runBackend(state MainState) {
 
 	state.Board.sendLEDCommand(state.LitSquares)
-	for state.Game.FullID == "" {
+	for state.Game.FullID() == "" {
 
 		err := lichess.FindPlayingGame(state.Game)
 		if err != nil {
 			log.Fatalf("Error finding game: %v", err)
 		}
 
-		if state.Game.FullID != "" {
+		if state.Game.FullID() != "" {
 			handleGame(state)
 			continue
 		}
 
-		if state.Game.FullID == "" {
+		if state.Game.FullID() == "" {
 			log.Println("No game found. Will try again in 3 seconds...")
 			state.UIState.Input <- NoCurrentGame
 			time.Sleep(3 * time.Second)
@@ -41,12 +41,12 @@ func handleGame(state MainState) {
 	log.Println("Game ID:", game.FullID, "You are playing as", game.Color)
 
 	state.UIState.Input <- GameStarted
-	go PlayStartSequence(state)
+	go state.PlayStartSequence()
 
 	chans := lichess.NewLichessEventChans()
-	if game.FullID != "" {
+	if game.FullID() != "" {
 		log.Println("starting streaming game", game.FullID, " You play as ", game.Color)
-		go lichess.StreamGame(game.FullID, chans)
+		go lichess.StreamGame(game.FullID(), chans)
 	}
 
 	for {
@@ -56,20 +56,20 @@ func handleGame(state MainState) {
 		case evt := <-chans.OpponentGoneChan:
 			log.Printf("OpponentGone: %+v\n", evt)
 			if evt.ClaimWinInSeconds <= 0 {
-				lichess.ClaimVictory(game.FullID)
+				lichess.ClaimVictory(game.FullID())
 			}
 		case evt := <-chans.GameStateChan:
 			game.Update(evt)
-			updateLitSquares(state)
+			state.UpdateLitSquares()
 			board.sendLEDCommand(state.LitSquares)
 			log.Println("Game updated", game.Moves)
 		case <-chans.GameEnded:
 			log.Printf("Game ended")
 			go state.PlayEndSequence()
 
-			if game.Winner == game.Color {
+			if game.Winner() == game.Color() {
 				state.UIState.Input <- GameWon
-			} else if game.Winner != "" {
+			} else if game.Winner() != "" {
 				state.UIState.Input <- GameLost
 			} else {
 				state.UIState.Input <- GameDrawn
@@ -80,7 +80,7 @@ func handleGame(state MainState) {
 			state.CandidateMove.Reset()
 			return
 		case <-state.BoardNotifs:
-			updateLitSquares(state)
+			state.UpdateLitSquares()
 			board.sendLEDCommand(state.LitSquares)
 			if state.Game.IsMyTurn() {
 				move := findValidMove(state)
@@ -118,7 +118,7 @@ func findValidMove(state MainState) string {
 
 	move := source + dest
 
-	g := NewChessGameFromMoves(state.Game.Moves)
+	g := NewChessGameFromMoves(state.Game.Moves())
 	invalid := g.MoveStr(move)
 	if invalid != nil {
 		log.Printf("invalid move %s", move)
@@ -133,31 +133,6 @@ func (state MainState) ResetLitSquares() {
 		delete(state.LitSquares, k)
 	}
 	state.Board.sendLEDCommand(state.LitSquares)
-}
-
-func updateLitSquares(state MainState) {
-	state.mu.Lock()
-	defer state.mu.Unlock()
-
-	g := NewChessGameFromMoves(state.Game.Moves)
-	for i := range 8 {
-		for j := range 8 {
-			square := chess.NewSquare(chess.File(i), chess.Rank(j))
-
-			chessGameColor := g.Position().Board().Piece(square).Color()
-			boardColor := state.Board.State()[i][j]
-			index := getIndexFromCoordinates(i, j)
-			value := chessGameColor != boardColor
-
-			// set to true if the square is lit, delete entry otherwise
-			if value {
-				state.LitSquares[index] = true
-			} else {
-				delete(state.LitSquares, index)
-			}
-
-		}
-	}
 }
 
 func getIndexFromCoordinates(i, j int) int8 {
@@ -213,70 +188,9 @@ func PlayWithDelay(state MainState, move string, allowSchedule bool) {
 
 		// Play the move
 		if move != "" {
-			lichess.PlayMove(state.Game.FullID, move)
+			lichess.PlayMove(state.Game.FullID(), move)
 			state.CandidateMove.Reset()
 		}
-	}
-
-}
-
-func PlayStartSequence(state MainState) {
-
-	period := 20 * time.Millisecond
-	seq := []int8{
-		int8(chess.E4),
-		int8(chess.E5),
-		int8(chess.D5),
-		int8(chess.D4),
-		int8(chess.D3),
-		int8(chess.E3),
-		int8(chess.F3),
-		int8(chess.F4),
-		int8(chess.F5),
-		int8(chess.F6),
-		int8(chess.E6),
-		int8(chess.D6),
-		int8(chess.C6),
-		int8(chess.C5),
-		int8(chess.C4),
-		int8(chess.C3),
-	}
-
-	first := map[int8]bool{}
-	first[seq[0]] = true
-	state.Board.sendLEDCommand(first)
-	time.Sleep(period)
-	for i := 1; i < len(seq); i++ {
-		local := map[int8]bool{}
-		local[seq[i-1]] = true
-		local[seq[i]] = true
-		state.Board.sendLEDCommand(local)
-		time.Sleep(period)
-	}
-
-	last := map[int8]bool{}
-	last[seq[len(seq)-1]] = true
-	state.Board.sendLEDCommand(first)
-	time.Sleep(period)
-
-	state.Board.sendLEDCommand(state.LitSquares)
-}
-
-func (state MainState) PlayEndSequence() {
-	period := 300 * time.Millisecond
-	localEmptyState := map[int8]bool{}
-
-	localLitState := map[int8]bool{}
-	localLitState[int8(chess.E4)] = true
-	localLitState[int8(chess.E5)] = true
-	localLitState[int8(chess.D4)] = true
-	localLitState[int8(chess.D5)] = true
-
-	for range 3 {
-		state.Board.sendLEDCommand(localLitState)
-		time.Sleep(period)
-		state.Board.sendLEDCommand(localEmptyState)
-		time.Sleep(period)
 	}
 
 }

@@ -1,6 +1,6 @@
 module github.com/aherve/eChess/goapp
 
-go 1.24.2
+go 1.24
 
 require (
 	github.com/corentings/chess/v2 v2.0.7

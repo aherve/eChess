@@ -141,6 +141,9 @@ func (board *Board) Connect(c chan bool) {
 }
 
 func (board *Board) sendLEDCommand(litSquares map[int8]bool) {
+	board.mu.Lock()
+	defer board.mu.Unlock()
+
 	command := make([]byte, len(litSquares)+2)
 	command[0] = 0xFE
 	command[len(command)-1] = 0xFF
@@ -152,8 +155,6 @@ func (board *Board) sendLEDCommand(litSquares map[int8]bool) {
 		pos++
 	}
 
-	board.mu.Lock()
-	defer board.mu.Unlock()
 	_, err := board.port.Write(command)
 	if err != nil {
 		log.Fatalf("Error while writing to port: %v", err)

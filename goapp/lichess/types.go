@@ -1,7 +1,15 @@
 package lichess
 
 type FindPlayingGameResponse struct {
-	NowPlaying []Game `json:"nowPlaying"`
+	NowPlaying []GameEvent `json:"nowPlaying"`
+}
+
+type GameEvent struct {
+	FullID   string   `json:"fullId"`
+	GameId   string   `json:"gameId"`
+	Color    string   `json:"color"` // "white" or "black"
+	Fen      string   `json:"fen"`
+	Opponent Opponent `json:"opponent"`
 }
 
 type Opponent struct {

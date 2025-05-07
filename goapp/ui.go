@@ -70,7 +70,7 @@ func runUI(state MainState) {
 			select {
 			case <-time.Tick(200 * time.Millisecond):
 				// update clock display if we are playing
-				if state.Game.FullID == "" {
+				if state.Game.FullID() == "" {
 					break
 				}
 				app.QueueUpdateDraw(func() {
@@ -88,14 +88,14 @@ func runUI(state MainState) {
 					var fromTime int
 					var fixedTime int
 					if state.Game.CurrentTurn() == chess.White {
-						fromTime = state.Game.Wtime
-						fixedTime = state.Game.Btime
+						fromTime = state.Game.Wtime()
+						fixedTime = state.Game.Btime()
 					} else {
-						fromTime = state.Game.Btime
-						fixedTime = state.Game.Wtime
+						fromTime = state.Game.Btime()
+						fixedTime = state.Game.Wtime()
 					}
 
-					elapsed := displayTimeElapsed(state.Game.ClockUpdatedAt, fromTime)
+					elapsed := displayTimeElapsed(state.Game.ClockUpdatedAt(), fromTime)
 					toUpdateWithElapsed.SetText(elapsed)
 					toUpdateWithFixed.SetText(displayTime(fixedTime))
 
@@ -109,7 +109,7 @@ func runUI(state MainState) {
 						pages.HidePage("seeking")
 						pages.ShowPage("play")
 						opponentName.SetText(getOpponentText(*state.Game))
-						playerName.SetText("You play " + state.Game.Color)
+						playerName.SetText("You play " + state.Game.Color())
 					})
 				case GameWon:
 					app.QueueUpdateDraw(func() {
@@ -154,7 +154,7 @@ func runUI(state MainState) {
 				case StopSeeking:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("seeking")
-						if state.Game.FullID != "" {
+						if state.Game.FullID() != "" {
 							pages.ShowPage("play")
 							pages.HidePage("seek")
 						} else {
@@ -290,7 +290,8 @@ func displayTime(millis int) string {
 }
 
 func getOpponentText(g lichess.Game) string {
-	return fmt.Sprintf("%s (%d)", g.Opponent.Username, g.Opponent.Rating)
+	opponent := g.Opponent()
+	return fmt.Sprintf("%s (%d)", opponent.Username, opponent.Rating)
 }
 
 func makeBtn(label string, action UIOutput, c chan UIOutput) *tview.Button {

@@ -9,48 +9,108 @@ import (
 )
 
 type Game struct {
-	FullID string `json:"fullId"`
-	GameId string `json:"gameId"`
-	Color  string `json:"color"` // "white" or "black"
-	//Fen      string   `json:"fen"`
-	Opponent       Opponent  `json:"opponent"`
-	Wtime          int       `json:"-"`
-	Btime          int       `json:"-"`
-	ClockUpdatedAt time.Time `json:"-"`
-	Winner         string    `json:"-"` // "white" or "black"
-	Moves          []string  `json:"-"`
-	mu             *sync.Mutex
+	fullID         string
+	gameId         string
+	color          string // "white" or "black"
+	opponent       *Opponent
+	wtime          int
+	btime          int
+	clockUpdatedAt time.Time
+	winner         string // "white" or "black"
+	moves          []string
+	mu             sync.RWMutex
 }
 
 func NewGame() *Game {
 	return &Game{
-		mu: &sync.Mutex{},
+		opponent: &Opponent{},
 	}
+}
+
+func (g Game) Opponent() *Opponent {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.opponent
+}
+
+func (g Game) FullID() string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.fullID
+}
+
+func (g Game) Wtime() int {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.wtime
+}
+
+func (g Game) Btime() int {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.btime
+}
+
+func (g Game) ClockUpdatedAt() time.Time {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.clockUpdatedAt
+}
+
+func (g Game) Color() string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.color
+}
+
+func (g Game) Moves() []string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.moves
+}
+
+func (g Game) Winner() string {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.winner
 }
 
 func (g *Game) Reset() {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	g.FullID = ""
-	g.GameId = ""
-	g.Color = ""
-	g.Opponent = Opponent{}
-	g.Wtime = -1
-	g.Btime = -1
-	g.Moves = []string{}
-	g.Winner = ""
-	g.ClockUpdatedAt = time.Now()
+	g.fullID = ""
+	g.gameId = ""
+	g.color = ""
+	g.opponent = &Opponent{}
+	g.wtime = -1
+	g.btime = -1
+	g.moves = []string{}
+	g.winner = ""
+	g.clockUpdatedAt = time.Now()
+}
+
+func (g *Game) UpdateFromFindGame(evt GameEvent) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	g.fullID = evt.FullID
+	g.gameId = evt.GameId
+	g.color = evt.Color
+	g.opponent = &evt.Opponent
+	g.moves = []string{}
+	g.wtime = -1
+	g.btime = -1
 }
 
 func (game *Game) Update(newState GameStateEvent) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	game.Wtime = newState.Wtime
-	game.Btime = newState.Btime
-	game.Winner = newState.Winner
-	game.ClockUpdatedAt = time.Now()
+	game.wtime = newState.Wtime
+	game.btime = newState.Btime
+	game.winner = newState.Winner
+	game.clockUpdatedAt = time.Now()
 
 	newMoves := []string{}
 	rawMoves := strings.SplitSeq(newState.Moves, " ")
@@ -61,11 +121,11 @@ func (game *Game) Update(newState GameStateEvent) {
 			newMoves = append(newMoves, move)
 		}
 	}
-	game.Moves = newMoves
+	game.moves = newMoves
 }
 
 func (game Game) CurrentTurn() chess.Color {
-	moveLen := len(game.Moves)
+	moveLen := len(game.Moves())
 	if moveLen%2 == 0 {
 		return chess.White
 	} else {
@@ -76,10 +136,10 @@ func (game Game) CurrentTurn() chess.Color {
 func (game Game) IsMyTurn() bool {
 
 	currentTurn := game.CurrentTurn()
-	if currentTurn == chess.White && game.Color == "white" {
+	if currentTurn == chess.White && game.Color() == "white" {
 		return true
 	}
-	if currentTurn == chess.Black && game.Color == "black" {
+	if currentTurn == chess.Black && game.Color() == "black" {
 		return true
 	}
 	return false
