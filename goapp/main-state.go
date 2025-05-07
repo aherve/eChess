@@ -19,14 +19,12 @@ type MainState struct {
 
 func NewMainState() MainState {
 	return MainState{
-		Board:       NewBoard(),
-		BoardNotifs: make(chan bool),
-		Game:        lichess.NewGame(),
-		LitSquares:  map[int8]bool{},
-		UIState:     NewUIState(),
-		CandidateMove: &CandidateMove{
-			mu: &sync.Mutex{},
-		},
+		Board:         NewBoard(),
+		BoardNotifs:   make(chan bool),
+		Game:          lichess.NewGame(),
+		LitSquares:    map[int8]bool{},
+		UIState:       NewUIState(),
+		CandidateMove: NewCandidateMove(),
 
 		mu: &sync.Mutex{},
 	}

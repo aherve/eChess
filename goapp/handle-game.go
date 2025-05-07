@@ -100,7 +100,7 @@ func findValidMove(state MainState) string {
 	dest := ""
 	for k := range state.LitSquares {
 		i, j := getCoordinatesFromIndex(k)
-		boardColor := state.Board.State[i][j]
+		boardColor := state.Board.State()[i][j]
 
 		// piece missing => has to be the source square
 		if boardColor == chess.NoColor {
@@ -145,7 +145,7 @@ func updateLitSquares(state MainState) {
 			square := chess.NewSquare(chess.File(i), chess.Rank(j))
 
 			chessGameColor := g.Position().Board().Piece(square).Color()
-			boardColor := state.Board.State[i][j]
+			boardColor := state.Board.State()[i][j]
 			index := getIndexFromCoordinates(i, j)
 			value := chessGameColor != boardColor
 
@@ -182,17 +182,14 @@ func NewChessGameFromMoves(moves []string) *chess.Game {
 }
 
 func PlayWithDelay(state MainState, move string, allowSchedule bool) {
-	state.CandidateMove.mu.Lock()
-	defer state.CandidateMove.mu.Unlock()
 
 	// If provided with a new move, then we record it
-	existing := state.CandidateMove.Move
+	existing := state.CandidateMove.Move()
 
 	if move != existing {
 
 		if allowSchedule {
-			state.CandidateMove.Move = move
-			state.CandidateMove.IssuedAt = time.Now()
+			state.CandidateMove.Set(move)
 
 			// Recursive call after a delay (play only, do not re-schedule it in case it changed)
 			if move != "" {
@@ -209,7 +206,7 @@ func PlayWithDelay(state MainState, move string, allowSchedule bool) {
 
 	} else {
 		// move == existing
-		if time.Since(state.CandidateMove.IssuedAt) < PLAY_DELAY {
+		if time.Since(state.CandidateMove.IssuedAt()) < PLAY_DELAY {
 			// too soon
 			return
 		}
@@ -217,8 +214,7 @@ func PlayWithDelay(state MainState, move string, allowSchedule bool) {
 		// Play the move
 		if move != "" {
 			lichess.PlayMove(state.Game.FullID, move)
-			state.CandidateMove.Move = ""
-			state.CandidateMove.IssuedAt = time.Now()
+			state.CandidateMove.Reset()
 		}
 	}
 

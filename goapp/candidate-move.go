@@ -6,15 +6,44 @@ import (
 )
 
 type CandidateMove struct {
-	Move     string
-	IssuedAt time.Time
-	mu       *sync.Mutex
+	move     string
+	issuedAt time.Time
+	mu       sync.RWMutex
+}
+
+func NewCandidateMove() *CandidateMove {
+	return &CandidateMove{
+		move:     "",
+		issuedAt: time.Now(),
+	}
+}
+
+func (c CandidateMove) Move() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.move
+}
+
+func (c CandidateMove) IssuedAt() time.Time {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.issuedAt
 }
 
 func (c *CandidateMove) Reset() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.Move = ""
-	c.IssuedAt = time.Now()
+	c.move = ""
+	c.issuedAt = time.Now()
+}
+
+func (c *CandidateMove) Set(move string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	c.move = move
+	c.issuedAt = time.Now()
 }

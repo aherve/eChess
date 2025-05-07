@@ -14,54 +14,52 @@ type BoardEvent = [16]byte
 type BoardState = [8][8]chess.Color
 
 type Board struct {
-	Connected bool
-	Port      serial.Port
-	State     BoardState
-	mu        *sync.Mutex
+	connected bool
+	port      serial.Port
+	state     BoardState
+	mu        sync.RWMutex
 }
 
 func NewBoard() *Board {
 	return &Board{
-		Connected: false,
-		mu:        &sync.Mutex{},
+		connected: false,
 	}
+}
+
+func (b Board) Connected() bool {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	return b.connected
+}
+
+func (b Board) State() BoardState {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	return b.state
 }
 
 func (board *Board) Update(squares BoardState) {
 	board.mu.Lock()
 	defer board.mu.Unlock()
+
 	for i := range squares {
 		for j := range squares[i] {
-			board.State[i][j] = squares[i][j]
+			board.state[i][j] = squares[i][j]
 		}
 	}
 }
 
-func buildSquares(evt BoardEvent) BoardState {
-	board := BoardState{}
-	for i := 0; i < 16; i += 2 {
-		whiteByte := evt[i]
-		blackByte := evt[i+1]
+func (board Board) Port() serial.Port {
+	board.mu.RLock()
+	defer board.mu.RUnlock()
 
-		for j := range 8 {
-
-			whiteBit := whiteByte & (1 << j)
-			blackBit := blackByte & (1 << j)
-
-			if whiteBit > 0 {
-				board[j][i/2] = chess.White
-			} else if blackBit > 0 {
-				board[j][i/2] = chess.Black
-			} else {
-				board[j][i/2] = chess.NoColor
-			}
-		}
-	}
-	return board
+	return board.port
 }
 
 func (board *Board) Listen(c chan bool) {
-	if !board.Connected {
+	if !board.Connected() {
 		log.Fatal("Board is not connected!")
 	}
 
@@ -69,7 +67,7 @@ func (board *Board) Listen(c chan bool) {
 	time.Sleep(1 * time.Second)
 	for {
 		newData := make([]byte, 128)
-		n, err := board.Port.Read(newData)
+		n, err := board.Port().Read(newData)
 		if err != nil {
 			log.Fatalf("Error while reading from port: %v", err)
 			break
@@ -101,7 +99,6 @@ func (board *Board) Listen(c chan bool) {
 				break
 			}
 		}
-
 	}
 }
 
@@ -132,8 +129,8 @@ func (board *Board) Connect(c chan bool) {
 					log.Fatalf("Error while opening port: %v", err)
 				}
 
-				board.Connected = true
-				board.Port = port
+				board.connected = true
+				board.port = port
 				log.Println("Connected to board on port", portName)
 				go board.Listen(c)
 				return
@@ -144,9 +141,6 @@ func (board *Board) Connect(c chan bool) {
 }
 
 func (board *Board) sendLEDCommand(litSquares map[int8]bool) {
-	board.mu.Lock()
-	defer board.mu.Unlock()
-
 	command := make([]byte, len(litSquares)+2)
 	command[0] = 0xFE
 	command[len(command)-1] = 0xFF
@@ -158,9 +152,34 @@ func (board *Board) sendLEDCommand(litSquares map[int8]bool) {
 		pos++
 	}
 
-	_, err := board.Port.Write(command)
+	board.mu.Lock()
+	defer board.mu.Unlock()
+	_, err := board.port.Write(command)
 	if err != nil {
 		log.Fatalf("Error while writing to port: %v", err)
 	}
 
+}
+
+func buildSquares(evt BoardEvent) BoardState {
+	board := BoardState{}
+	for i := 0; i < 16; i += 2 {
+		whiteByte := evt[i]
+		blackByte := evt[i+1]
+
+		for j := range 8 {
+
+			whiteBit := whiteByte & (1 << j)
+			blackBit := blackByte & (1 << j)
+
+			if whiteBit > 0 {
+				board[j][i/2] = chess.White
+			} else if blackBit > 0 {
+				board[j][i/2] = chess.Black
+			} else {
+				board[j][i/2] = chess.NoColor
+			}
+		}
+	}
+	return board
 }

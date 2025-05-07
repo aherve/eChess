@@ -25,7 +25,7 @@ func main() {
 		stubState(state)
 	} else {
 		// Connect board
-		for !state.Board.Connected {
+		for !state.Board.Connected() {
 			log.Println("Waiting for a board connection...")
 			state.Board.Connect(state.BoardNotifs)
 			time.Sleep(500 * time.Millisecond)
