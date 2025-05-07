@@ -16,7 +16,7 @@ type MainState struct {
 	LitSquares    map[int8]bool
 	UIState       *UIState
 
-	mu *sync.Mutex
+	mu sync.RWMutex
 }
 
 func NewMainState() MainState {
@@ -27,17 +27,16 @@ func NewMainState() MainState {
 		LitSquares:    map[int8]bool{},
 		UIState:       NewUIState(),
 		CandidateMove: NewCandidateMove(),
-
-		mu: &sync.Mutex{},
 	}
 }
 
 func (state *MainState) UpdateLitSquares() {
 
+	g := NewChessGameFromMoves(state.Game.Moves())
+
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
-	g := NewChessGameFromMoves(state.Game.Moves())
 	for i := range 8 {
 		for j := range 8 {
 			square := chess.NewSquare(chess.File(i), chess.Rank(j))
