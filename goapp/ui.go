@@ -291,7 +291,7 @@ func displayTime(millis int) string {
 
 func getOpponentText(g *lichess.Game) string {
 	opponent := g.Opponent()
-	return fmt.Sprintf("%s (%d)", opponent.Username, opponent.Rating)
+	return fmt.Sprintf("(%d) %s", opponent.Rating, opponent.Username)
 }
 
 func makeBtn(label string, action UIOutput, c chan UIOutput) *tview.Button {
