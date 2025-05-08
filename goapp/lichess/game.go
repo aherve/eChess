@@ -27,7 +27,7 @@ type Game struct {
 func NewGame() *Game {
 	return &Game{
 		opponent:  &Opponent{},
-		chessGame: chess.NewGame(),
+		chessGame: chess.NewGame(chess.UseNotation(chess.UCINotation{})),
 	}
 }
 
@@ -201,5 +201,9 @@ func NewChessGameFromMoves(moves []string) *chess.Game {
 func (g *Game) IsValidMove(move string) bool {
 	clone := g.ChessGame().Clone()
 	err := clone.MoveStr(move)
+	if err != nil {
+		log.Printf("invalid move %s", move)
+		return false
+	}
 	return err == nil
 }

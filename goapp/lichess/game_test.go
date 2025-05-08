@@ -5,6 +5,13 @@ import (
 	"testing"
 )
 
+func TestFirstMove(t *testing.T) {
+	g := NewGame()
+	isValid := g.IsValidMove("e2e4")
+	if !isValid {
+		t.Errorf("expected move e2e4 to be valid on a new state")
+	}
+}
 func TestUpdateGame(t *testing.T) {
 
 	g := NewStubGame([]string{"e2e4"})
