@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"sync"
 	"time"
 
@@ -96,7 +97,11 @@ func (cm *CandidateMove) recursivePlayWithDelay(gameID, move string, shouldSched
 	}
 
 	// move is non-empty, and it's time => play it!
-	lichess.PlayMove(gameID, move)
+	err := lichess.PlayMove(gameID, move)
+	if err != nil {
+		// Error can happen becaus a move that once was valid could now be invalid
+		log.Printf("WARNING: failed to play move: %+v. Clearing state", err)
+	}
 	// reset our state
 	cm.move = ""
 	cm.issuedAt = time.Now()

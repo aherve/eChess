@@ -31,10 +31,8 @@ func NewMainState() *MainState {
 }
 
 func (s *MainState) Board() *Board {
-	/*
-	 *s.mu.RLock()
-	 *defer s.mu.RUnlock()
-	 */
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.board
 }
 
@@ -49,26 +47,20 @@ func (s *MainState) ResetLitSquares() {
 }
 
 func (s *MainState) BoardNotifs() chan bool {
-	/*
-	 *s.mu.RLock()
-	 *defer s.mu.RUnlock()
-	 */
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.boardNotifs
 }
 
 func (s *MainState) CandidateMove() *CandidateMove {
-	/*
-	 *s.mu.RLock()
-	 *defer s.mu.RUnlock()
-	 */
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.candidateMove
 }
 
 func (s *MainState) Game() *lichess.Game {
-	/*
-	 *s.mu.RLock()
-	 *defer s.mu.RUnlock()
-	 */
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.game
 }
 
@@ -79,29 +71,24 @@ func (s *MainState) LitSquares() map[int8]bool {
 }
 
 func (s *MainState) UIState() *UIState {
-	/*
-	 *s.mu.RLock()
-	 *defer s.mu.RUnlock()
-	 */
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	return s.uIState
 }
 
 func (state *MainState) UpdateLitSquares() {
-
-	moves := state.game.Moves()
-	boardState := state.board.State()
-
-	g := NewChessGameFromMoves(moves)
-	chessBoard := g.Position().Board()
+	boardState := state.Board().State()
+	chessGameBoard := state.Game().ChessGame().Position().Board()
 
 	state.mu.Lock()
 	defer state.mu.Unlock()
 
 	for i := range 8 {
 		for j := range 8 {
+
 			square := chess.NewSquare(chess.File(i), chess.Rank(j))
 
-			chessGameColor := chessBoard.Piece(square).Color()
+			chessGameColor := chessGameBoard.Piece(square).Color()
 			boardColor := boardState[i][j]
 			index := getIndexFromCoordinates(i, j)
 			value := chessGameColor != boardColor
@@ -112,7 +99,6 @@ func (state *MainState) UpdateLitSquares() {
 			} else {
 				delete(state.litSquares, index)
 			}
-
 		}
 	}
 }

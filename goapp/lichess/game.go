@@ -1,6 +1,7 @@
 package lichess
 
 import (
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -18,13 +19,22 @@ type Game struct {
 	clockUpdatedAt time.Time
 	winner         string // "white" or "black"
 	moves          []string
-	mu             sync.RWMutex
+	chessGame      *chess.Game
+
+	mu sync.RWMutex
 }
 
 func NewGame() *Game {
 	return &Game{
-		opponent: &Opponent{},
+		opponent:  &Opponent{},
+		chessGame: chess.NewGame(),
 	}
+}
+
+func (g *Game) ChessGame() *chess.Game {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.chessGame
 }
 
 func (g *Game) Opponent() *Opponent {
@@ -103,17 +113,17 @@ func (g *Game) UpdateFromFindGame(evt GameEvent) {
 	g.btime = -1
 }
 
-func (game *Game) Update(newState GameStateEvent) {
+func (game *Game) Update(newStateEvt GameStateEvent) {
 	game.mu.Lock()
 	defer game.mu.Unlock()
 
-	game.wtime = newState.Wtime
-	game.btime = newState.Btime
-	game.winner = newState.Winner
+	game.wtime = newStateEvt.Wtime
+	game.btime = newStateEvt.Btime
+	game.winner = newStateEvt.Winner
 	game.clockUpdatedAt = time.Now()
 
 	newMoves := []string{}
-	rawMoves := strings.SplitSeq(newState.Moves, " ")
+	rawMoves := strings.SplitSeq(newStateEvt.Moves, " ")
 
 	for move := range rawMoves {
 		move = strings.TrimSpace(move)
@@ -121,7 +131,25 @@ func (game *Game) Update(newState GameStateEvent) {
 			newMoves = append(newMoves, move)
 		}
 	}
+
 	game.moves = newMoves
+
+	if len(newMoves) == 0 {
+		return
+	}
+
+	lastMove := newMoves[len(newMoves)-1]
+
+	// Try to add last move to the chess game
+
+	if err := game.chessGame.MoveStr(lastMove); err == nil {
+		return
+	} else {
+		// Adding a single move failed. Perhaps we were lacking behind => create a new game and attach it
+		log.Printf("WARNING, creating a new chess game because we could not add the last move %s from %+v\n", lastMove, newMoves)
+		game.chessGame = NewChessGameFromMoves(newMoves)
+	}
+
 }
 
 func (game *Game) CurrentTurn() chess.Color {
@@ -143,4 +171,35 @@ func (game *Game) IsMyTurn() bool {
 		return true
 	}
 	return false
+}
+
+func NewStubGame(moves []string) *Game {
+
+	return &Game{
+		fullID:    "fake",
+		gameId:    "fa",
+		color:     "black",
+		opponent:  &Opponent{},
+		moves:     moves,
+		chessGame: NewChessGameFromMoves(moves),
+	}
+}
+
+func NewChessGameFromMoves(moves []string) *chess.Game {
+	g := chess.NewGame(chess.UseNotation(chess.UCINotation{}))
+	for _, move := range moves {
+		if move == "" {
+			continue
+		}
+		if err := g.MoveStr(move); err != nil {
+			log.Fatalf("invalid move %s", move)
+		}
+	}
+	return g
+}
+
+func (g *Game) IsValidMove(move string) bool {
+	clone := g.ChessGame().Clone()
+	err := clone.MoveStr(move)
+	return err == nil
 }

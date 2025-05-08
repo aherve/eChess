@@ -121,14 +121,12 @@ func findValidMove(state *MainState) string {
 
 	move := source + dest
 
-	g := NewChessGameFromMoves(state.Game().Moves())
-	invalid := g.MoveStr(move)
-	if invalid != nil {
+	if state.Game().IsValidMove(move) {
+		return move
+	} else {
 		log.Printf("invalid move %s", move)
 		return ""
 	}
-
-	return move
 }
 
 func getIndexFromCoordinates(i, j int) int8 {
@@ -137,17 +135,4 @@ func getIndexFromCoordinates(i, j int) int8 {
 
 func getCoordinatesFromIndex(index int8) (int8, int8) {
 	return (index % 8), (index / 8)
-}
-
-func NewChessGameFromMoves(moves []string) *chess.Game {
-	g := chess.NewGame(chess.UseNotation(chess.UCINotation{}))
-	for _, move := range moves {
-		if move == "" {
-			continue
-		}
-		if err := g.MoveStr(move); err != nil {
-			log.Fatalf("invalid move %s", move)
-		}
-	}
-	return g
 }

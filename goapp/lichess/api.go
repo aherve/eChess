@@ -89,12 +89,10 @@ func ResignGame(gameId string) {
 	}
 }
 
-func PlayMove(gameId string, move string) {
+func PlayMove(gameId string, move string) error {
 	log.Printf("PLAYING MOVE %s on game %s", move, gameId)
 	_, err := lichessFetch(context.Background(), fmt.Sprintf("board/game/%s/move/%s", gameId, move), nil, "POST")
-	if err != nil {
-		log.Fatalf("error while playing move: %v", err)
-	}
+	return err
 }
 
 func FindPlayingGame(lichessGame *Game) error {

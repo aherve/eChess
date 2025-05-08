@@ -26,9 +26,10 @@ func TestBuildURLParams(t *testing.T) {
 
 	params["foobar"] = "baz"
 	res = buildURLParams(params)
-	expected = "foo=bar&foobar=baz"
-	if res != expected {
-		t.Errorf("expected params to be %s, but got %s", expected, res)
+	expected1 := "foo=bar&foobar=baz"
+	expected2 := "foobar=baz&foo=bar"
+	if res != expected1 && res != expected2 {
+		t.Errorf("expected params to be %s or %s, but got %s", expected1, expected2, res)
 	}
 
 }

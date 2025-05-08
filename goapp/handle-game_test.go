@@ -17,7 +17,7 @@ func TestGetIndexFromCoordinates(t *testing.T) {
 		t.Errorf("expected e4 to be E4 but got %v", shouldBeE4)
 	}
 
-	// it matches what notnil/chess does
+	// it matches what chess lib does
 	if shouldBeA2 != int8(chess.A2) {
 		t.Errorf("expected our A2 notation to match chess A2 const")
 	}
