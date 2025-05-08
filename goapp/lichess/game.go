@@ -98,6 +98,7 @@ func (g *Game) Reset() {
 	g.moves = []string{}
 	g.winner = ""
 	g.clockUpdatedAt = time.Now()
+	g.chessGame = chess.NewGame(chess.UseNotation(chess.UCINotation{}))
 }
 
 func (g *Game) UpdateFromFindGame(evt GameEvent) {
