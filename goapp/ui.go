@@ -68,7 +68,7 @@ func runUI(state *MainState) {
 
 		modal := tview.NewModal().
 			SetText("Promote").
-			AddButtons([]string{"♕", "♘", "♗", "♖", "❌"}).
+			AddButtons([]string{"♕", "♘", "♗", "♖"}).
 			SetDoneFunc(func(buttonIndex int, buttonLabel string) {
 				switch buttonLabel {
 				case "♕":
@@ -80,8 +80,6 @@ func runUI(state *MainState) {
 					state.UIState().Promote <- PromoteBishop
 				case "♖":
 					state.UIState().Promote <- PromoteRook
-				case "❌":
-					state.UIState().Promote <- PromoteNothing
 				}
 				pages.RemovePage("modal")
 			})

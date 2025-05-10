@@ -199,12 +199,22 @@ func NewChessGameFromMoves(moves []string) *chess.Game {
 	return g
 }
 
-func (g *Game) IsValidMove(move string) bool {
+// IsValidMove checks if the move is valid and returns a boolean indicating if the move is valid, and a boolean indicating if the move is a promotion
+func (g *Game) IsValidMove(move string) (bool, bool) {
 	clone := g.ChessGame().Clone()
 	err := clone.MoveStr(move)
-	if err != nil {
-		log.Printf("invalid move %s", move)
-		return false
+	if err == nil {
+		return true, false
 	}
-	return err == nil
+
+	// Move is invalid. Let's check if adding a promotion makes it valid
+	if (move[1] == '7' && move[3] == '8') || (move[1] == '2' && move[3] == '1') {
+		// Assert promotion by attempting to queen
+		err := clone.MoveStr(move + "q")
+		if err == nil {
+			return true, true
+		}
+	}
+
+	return false, false
 }

@@ -83,11 +83,9 @@ func handleGame(state *MainState) {
 			state.UpdateLitSquares()
 			board.sendLEDCommand(state.LitSquares())
 			if state.Game().IsMyTurn() {
-				move := findValidMove(state)
-				if move != "" {
-					state.UIState().Input <- PromoteWhat
-					promoteRes := <-state.UIState().Promote
-					log.Println("Promotion result:", promoteRes)
+				move, needsPromotion := findValidMove(state)
+				if move != "" && needsPromotion {
+					move = addPromotion(move, state.UIState())
 				}
 				state.CandidateMove().PlayWithDelay(state.Game().FullID(), move)
 			}
@@ -95,13 +93,30 @@ func handleGame(state *MainState) {
 	}
 }
 
-func findValidMove(state *MainState) string {
+func addPromotion(move string, uiState *UIState) string {
+	uiState.Input <- PromoteWhat
+	promoteRes := <-uiState.Promote
+	log.Println("Promotion result:", promoteRes)
+	switch promoteRes {
+	case PromoteBishop:
+		move += "b"
+	case PromoteKnight:
+		move += "n"
+	case PromoteQueen:
+		move += "q"
+	case PromoteRook:
+		move += "r"
+	}
+	return move
+}
+
+func findValidMove(state *MainState) (string, bool) {
 	litSquares := state.LitSquares()
 	boardState := state.Board().State()
 
 	// must have 2 changes exactly
 	if len(litSquares) != 2 {
-		return ""
+		return "", false
 	}
 
 	source := ""
@@ -121,16 +136,17 @@ func findValidMove(state *MainState) string {
 
 	// If we managed to define one source and one dest, then we assert whether the move is valid or not
 	if source == "" || dest == "" {
-		return ""
+		return "", false
 	}
 
 	move := source + dest
 
-	if state.Game().IsValidMove(move) {
-		return move
+	valid, needsPromotion := state.Game().IsValidMove(move)
+	if valid {
+		return move, needsPromotion
 	} else {
 		log.Printf("invalid move %s", move)
-		return ""
+		return "", false
 	}
 }
 

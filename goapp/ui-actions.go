@@ -52,7 +52,6 @@ const (
 	PromoteKnight
 	PromoteRook
 	PromoteBishop
-	PromoteNothing
 )
 
 func (p Promotion) String() string {
@@ -66,8 +65,6 @@ func (p Promotion) String() string {
 		return "PromoteQueen"
 	case PromoteRook:
 		return "PromoteRook"
-	case PromoteNothing:
-		return "PromoteNothing"
 	default:
 		return "Unknown Promotion"
 	}
