@@ -6,7 +6,7 @@ import (
 	"github.com/aherve/eChess/goapp/lichess"
 )
 
-type UIOutput int
+type UIOutput int8
 
 const (
 	Seek1510 UIOutput = iota
@@ -42,6 +42,34 @@ func (o UIOutput) String() string {
 		return "Draw"
 	default:
 		return "Unknown UIOutput"
+	}
+}
+
+type Promotion int8
+
+const (
+	PromoteQueen Promotion = iota
+	PromoteKnight
+	PromoteRook
+	PromoteBishop
+	PromoteNothing
+)
+
+func (p Promotion) String() string {
+	switch p {
+
+	case PromoteBishop:
+		return "PromoteBishop"
+	case PromoteKnight:
+		return "PromoteKnight"
+	case PromoteQueen:
+		return "PromoteQueen"
+	case PromoteRook:
+		return "PromoteRook"
+	case PromoteNothing:
+		return "PromoteNothing"
+	default:
+		return "Unknown Promotion"
 	}
 }
 

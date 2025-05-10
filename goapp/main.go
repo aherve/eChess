@@ -4,6 +4,8 @@ import (
 	"log"
 	"os"
 	"time"
+
+	"github.com/aherve/eChess/goapp/lichess"
 )
 
 func main() {
@@ -40,24 +42,8 @@ func main() {
 }
 
 func stubState(state *MainState) {
-	/*
-	 *state.Game.clockUpdatedAt = time.Now()
-	 *state.Game.wtime = 300
-	 *state.Game.btime = 300
-	 *state.Game.gameId = ""
-	 *state.Game.color = "white"
-	 *state.Game.moves = []string{"e2e4", "e7e5"}
-	 *state.Game.opponent.Username = "some patzer"
-	 *state.Game.opponent.Rating = 2100
-	 *go func() {
-	 *  state.UIState.Input <- GameLost
-	 *  time.Sleep(10 * time.Second)
-	 *  state.Game.wtime = 305
-	 *  state.Game.btime = 300
-	 *  state.Game.clockUpdatedAt = time.Now()
-	 *  state.Game.gameId = ""
-	 *  state.Game.moves = []string{"e2e4", "e7e5", "g1f3"}
-	 *}()
-	 */
-
+	state.game = lichess.NewStubGame([]string{})
+	go func() {
+		state.UIState().Input <- GameStarted
+	}()
 }

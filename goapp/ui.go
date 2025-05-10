@@ -64,6 +64,32 @@ func runUI(state *MainState) {
 		AddPage("seeking", seekingPage, true, false).
 		AddPage("play", playLayout, true, false)
 
+	openPromoteModal := func() {
+
+		modal := tview.NewModal().
+			SetText("Promote").
+			AddButtons([]string{"♕", "♘", "♗", "♖", "❌"}).
+			SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+				switch buttonLabel {
+				case "♕":
+					log.Println("sending promote queen")
+					state.UIState().Promote <- PromoteQueen
+				case "♘":
+					state.UIState().Promote <- PromoteKnight
+				case "♗":
+					state.UIState().Promote <- PromoteBishop
+				case "♖":
+					state.UIState().Promote <- PromoteRook
+				case "❌":
+					state.UIState().Promote <- PromoteNothing
+				}
+				pages.RemovePage("modal")
+			})
+		app.QueueUpdateDraw(func() {
+			pages.AddPage("modal", modal, true, true)
+		})
+	}
+
 	// handle input events
 	go func() {
 		for {
@@ -103,6 +129,8 @@ func runUI(state *MainState) {
 			case input := <-state.UIState().Input:
 				log.Printf("UI Received input: %s", input.String())
 				switch input {
+				case PromoteWhat:
+					go openPromoteModal()
 				case GameStarted:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("seek")
@@ -175,7 +203,6 @@ func runUI(state *MainState) {
 		return event
 	})
 
-	// Run
 	if err := app.SetRoot(pages, true).EnableMouse(true).Run(); err != nil {
 		log.Fatalf("Error running application: %v", err)
 	}

@@ -10,8 +10,9 @@ import (
 )
 
 type UIState struct {
-	Input  chan UIInput
-	Output chan UIOutput
+	Input   chan UIInput  // System talking to the UI
+	Output  chan UIOutput // UI talking to the system
+	Promote chan Promotion
 
 	cancelSeek *context.CancelFunc
 	mu         sync.Mutex
@@ -19,8 +20,9 @@ type UIState struct {
 
 func NewUIState() *UIState {
 	return &UIState{
-		Input:  make(chan UIInput),
-		Output: make(chan UIOutput),
+		Input:   make(chan UIInput),
+		Output:  make(chan UIOutput),
+		Promote: make(chan Promotion),
 	}
 }
 

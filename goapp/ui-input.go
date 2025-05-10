@@ -11,6 +11,7 @@ const (
 	NoCurrentGame
 	Seeking
 	StopSeeking
+	PromoteWhat
 )
 
 func (i UIInput) String() string {
@@ -31,6 +32,8 @@ func (i UIInput) String() string {
 		return "Seeking"
 	case StopSeeking:
 		return "StopSeeking"
+	case PromoteWhat:
+		return "PromoteWhat"
 	default:
 		return "Unknown UIInput"
 	}

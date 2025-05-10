@@ -84,6 +84,11 @@ func handleGame(state *MainState) {
 			board.sendLEDCommand(state.LitSquares())
 			if state.Game().IsMyTurn() {
 				move := findValidMove(state)
+				if move != "" {
+					state.UIState().Input <- PromoteWhat
+					promoteRes := <-state.UIState().Promote
+					log.Println("Promotion result:", promoteRes)
+				}
 				state.CandidateMove().PlayWithDelay(state.Game().FullID(), move)
 			}
 		}
