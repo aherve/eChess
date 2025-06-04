@@ -25,14 +25,6 @@ func runUI(state *MainState) {
 	playerClock := tview.NewTextView().
 		SetTextAlign(tview.AlignRight)
 
-	topBar := tview.NewFlex().
-		AddItem(playerName, 0, 3, false).
-		AddItem(playerClock, 10, 0, false)
-
-	topBar.SetBorder(true)
-	topBar.SetBorderPadding(1, 1, 2, 2)
-
-	// Opponent info
 	opponentName := tview.NewTextView().
 		SetText(getOpponentText(state.Game())).
 		SetTextAlign(tview.AlignLeft)
@@ -40,9 +32,16 @@ func runUI(state *MainState) {
 	opponentClock := tview.NewTextView().
 		SetTextAlign(tview.AlignRight)
 
-	middleBar := tview.NewFlex().
+	topBar := tview.NewFlex().
 		AddItem(opponentName, 0, 3, false).
 		AddItem(opponentClock, 10, 0, false)
+
+	topBar.SetBorder(true)
+	topBar.SetBorderPadding(1, 1, 2, 2)
+
+	middleBar := tview.NewFlex().
+		AddItem(playerName, 0, 3, false).
+		AddItem(opponentName, 10, 0, false)
 
 	middleBar.SetBorder(true)
 	middleBar.SetBorderPadding(1, 1, 2, 2)
