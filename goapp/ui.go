@@ -41,7 +41,7 @@ func runUI(state *MainState) {
 
 	middleBar := tview.NewFlex().
 		AddItem(playerName, 0, 3, false).
-		AddItem(opponentName, 10, 0, false)
+		AddItem(playerClock, 10, 0, false)
 
 	middleBar.SetBorder(true)
 	middleBar.SetBorderPadding(1, 1, 2, 2)
