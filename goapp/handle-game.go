@@ -8,6 +8,7 @@ import (
 	"github.com/notnil/chess"
 )
 
+// Sliding a piece on the board will trigger detection for many squares. We only send the move to the server when a stable position is reached.
 const PlayDelay = 250 * time.Millisecond
 
 func runBackend(state *MainState) {

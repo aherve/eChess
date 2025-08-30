@@ -121,7 +121,7 @@ _Example of how a row with 2 white pieces and 1 black piece would be encoded_
 
 Lastly, the main program is written in typescript, and uses the `serialport` library to communicate with the arduino. It will read both the board state and the game moves from lichess to reconcilate the position, and determine when a move should be played (_i.e._ sent to the server), or when some LEDs should be lit.
 
-The code can be found in [the app directory](app/)
+The code can be found in [the app directory](goapp/)
 
 ## Conclusion
 
