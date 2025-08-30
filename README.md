@@ -26,7 +26,7 @@ Using linear sensors we are then able to detect between 3 distinct states:
 - black piece (high voltage)
 - no piece (~ half the supply voltage)
 
-In addition to the sensors, a 8x8 LED matrix is used to display the opponent's moves on the board. An arduino microcontroller interfaces with a typescript program running on a computer to control the LEDs, read the sensors, and communicate with the lichess API.
+In addition to the sensors, a 8x8 LED matrix is used to display the opponent's moves on the board. An arduino microcontroller interfaces with an embedded go program to control the LEDs, read the sensors, and communicate with the lichess API.
 
 ## Showing the moves
 
@@ -119,7 +119,7 @@ _Example of how a row with 2 white pieces and 1 black piece would be encoded_
 
 ## The program
 
-Lastly, the main program is written in typescript, and uses the `serialport` library to communicate with the arduino. It will read both the board state and the game moves from lichess to reconcilate the position, and determine when a move should be played (_i.e._ sent to the server), or when some LEDs should be lit.
+Lastly, the main program is written in go, and communicates with the arduino. It will read both the board state and the game moves from lichess to reconcilate the position, and determine when a move should be played (_i.e._ sent to the server), or when some LEDs should be lit. The user interface is provided by a touchscreen, and everything runs on a raspberry zero.
 
 The code can be found in [the app directory](goapp/)
 
