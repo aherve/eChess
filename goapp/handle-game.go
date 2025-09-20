@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
@@ -54,6 +55,9 @@ func handleGame(state *MainState) {
 		select {
 		case evt := <-chans.ChatChan:
 			log.Printf("[%s]: %s", evt.UserName, evt.Text)
+			if opponentOffersDraw(evt, state) {
+				state.Game().SetOpponentOffersDraw(true)
+			}
 		case evt := <-chans.OpponentGoneChan:
 			log.Printf("OpponentGone: %+v\n", evt)
 			if evt.ClaimWinInSeconds <= 0 {
@@ -92,6 +96,15 @@ func handleGame(state *MainState) {
 			}
 		}
 	}
+}
+
+func opponentOffersDraw(chatLine lichess.ChatLineEvent, s *MainState) bool {
+	opponent := s.Game().Opponent().Username
+	chatAuthor := chatLine.UserName
+	if chatAuthor != opponent {
+		return false
+	}
+	return strings.Contains(chatLine.Text, "offers draw")
 }
 
 func addPromotion(move string, uiState *UIState) string {

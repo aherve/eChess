@@ -10,24 +10,26 @@ import (
 )
 
 type Game struct {
-	fullID         string
-	gameId         string
-	color          string // "white" or "black"
-	opponent       *Opponent
-	wtime          int
-	btime          int
-	clockUpdatedAt time.Time
-	winner         string // "white" or "black"
-	moves          []string
-	chessGame      *chess.Game
+	fullID             string
+	gameId             string
+	color              string // "white" or "black"
+	opponent           *Opponent
+	wtime              int
+	btime              int
+	clockUpdatedAt     time.Time
+	winner             string // "white" or "black"
+	moves              []string
+	chessGame          *chess.Game
+	opponentOffersDraw bool
 
 	mu sync.RWMutex
 }
 
 func NewGame() *Game {
 	return &Game{
-		opponent:  &Opponent{},
-		chessGame: chess.NewGame(chess.UseNotation(chess.UCINotation{})),
+		opponent:           &Opponent{},
+		chessGame:          chess.NewGame(chess.UseNotation(chess.UCINotation{})),
+		opponentOffersDraw: false,
 	}
 }
 
@@ -85,6 +87,18 @@ func (g *Game) Winner() string {
 	return g.winner
 }
 
+func (g *Game) OpponentOffersDraw() bool {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.opponentOffersDraw
+}
+
+func (g *Game) SetOpponentOffersDraw(val bool) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.opponentOffersDraw = val
+}
+
 func (g *Game) Reset() {
 	g.mu.Lock()
 	defer g.mu.Unlock()
@@ -99,6 +113,7 @@ func (g *Game) Reset() {
 	g.winner = ""
 	g.clockUpdatedAt = time.Now()
 	g.chessGame = chess.NewGame(chess.UseNotation(chess.UCINotation{}))
+	g.opponentOffersDraw = false
 }
 
 func (g *Game) UpdateFromFindGame(evt GameEvent) {
@@ -112,6 +127,7 @@ func (g *Game) UpdateFromFindGame(evt GameEvent) {
 	g.moves = []string{}
 	g.wtime = -1
 	g.btime = -1
+	g.opponentOffersDraw = false
 }
 
 func (game *Game) Update(newStateEvt GameStateEvent) {
@@ -131,6 +147,11 @@ func (game *Game) Update(newStateEvt GameStateEvent) {
 		if move != "" {
 			newMoves = append(newMoves, move)
 		}
+	}
+
+	// if the number of moves changed, we reset the draw offer
+	if len(newMoves) != len(game.moves) {
+		game.opponentOffersDraw = false
 	}
 
 	game.moves = newMoves
@@ -177,12 +198,13 @@ func (game *Game) IsMyTurn() bool {
 func NewStubGame(moves []string) *Game {
 
 	return &Game{
-		fullID:    "fake",
-		gameId:    "fa",
-		color:     "black",
-		opponent:  &Opponent{},
-		moves:     moves,
-		chessGame: NewChessGameFromMoves(moves),
+		fullID:             "fake",
+		gameId:             "fa",
+		color:              "black",
+		opponent:           &Opponent{},
+		moves:              moves,
+		chessGame:          NewChessGameFromMoves(moves),
+		opponentOffersDraw: true,
 	}
 }
 

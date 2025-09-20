@@ -122,6 +122,8 @@ func runUI(state *MainState) {
 					toUpdateWithElapsed.SetText(elapsed)
 					toUpdateWithFixed.SetText(displayTime(fixedTime))
 
+					opponentName.SetText(getOpponentText(state.Game()))
+
 				})
 			case input := <-state.UIState().Input:
 				log.Printf("UI Received input: %s", input.String())
@@ -314,6 +316,9 @@ func displayTime(millis int) string {
 }
 
 func getOpponentText(g *lichess.Game) string {
+	if g.OpponentOffersDraw() {
+		return "🤝 Draw offered"
+	}
 	opponent := g.Opponent()
 	return fmt.Sprintf("(%d) %s", opponent.Rating, opponent.Username)
 }
