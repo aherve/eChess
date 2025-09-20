@@ -55,7 +55,7 @@ func handleGame(state *MainState) {
 		select {
 		case evt := <-chans.ChatChan:
 			log.Printf("[%s]: %s", evt.UserName, evt.Text)
-			if opponentOffersDraw(evt, state) {
+			if isDrawOfferFromOpponent(evt, state) {
 				state.Game().SetOpponentOffersDraw(true)
 			}
 		case evt := <-chans.OpponentGoneChan:
@@ -98,12 +98,18 @@ func handleGame(state *MainState) {
 	}
 }
 
-func opponentOffersDraw(chatLine lichess.ChatLineEvent, s *MainState) bool {
-	opponent := s.Game().Opponent().Username
-	chatAuthor := chatLine.UserName
-	if chatAuthor != opponent {
+// example draw offer:  [lichess]: White offers draw
+func isDrawOfferFromOpponent(chatLine lichess.ChatLineEvent, s *MainState) bool {
+	if chatLine.UserName != "lichess" {
 		return false
 	}
+	myColor := strings.ToLower(s.Game().Color())
+	lowerText := strings.ToLower(chatLine.Text)
+
+	if strings.HasPrefix(lowerText, myColor) {
+		return false
+	}
+
 	return strings.Contains(chatLine.Text, "offers draw")
 }
 
