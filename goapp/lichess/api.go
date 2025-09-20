@@ -99,6 +99,9 @@ func FindPlayingGame(lichessGame *Game) error {
 	params := make(map[string]string)
 	params["nb"] = "1"
 	body, err := lichessFetch(context.Background(), "account/playing", params, "GET")
+	if err != nil {
+		return fmt.Errorf("error fetching playing games: %v", err)
+	}
 	defer body.Close()
 	data, err := io.ReadAll(body)
 	if err != nil {
@@ -119,7 +122,7 @@ func FindPlayingGame(lichessGame *Game) error {
 }
 
 func readSecret() (string, error) {
-	data, err := os.ReadFile("../app/secret.json")
+	data, err := os.ReadFile("secret.json")
 	if err != nil {
 		return "", err
 	}
