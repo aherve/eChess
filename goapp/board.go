@@ -52,7 +52,7 @@ func (b *Board) String() string {
 			case chess.Black:
 				res += "B "
 			default:
-				res += ". "
+				res += "· "
 			}
 		}
 		res += "\n"
