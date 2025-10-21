@@ -103,7 +103,6 @@ func handleGame(state *MainState) {
 			state.ResetLitSquares()
 			state.CandidateMove().Reset()
 			return
-		case <-state.BoardNotifs():
 		}
 	}
 }
