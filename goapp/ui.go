@@ -17,7 +17,9 @@ func runUI(state *MainState) {
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
 
 	app := tview.NewApplication()
-	seekButtons, seekTitle := seekButtons(state)
+	seekButtons := seekButtons(state)
+
+	currentBoard, boardState, currentBoardTitle := buildCurrentBoard(state)
 
 	playerName := tview.NewTextView().
 		SetTextAlign(tview.AlignLeft)
@@ -59,9 +61,10 @@ func runUI(state *MainState) {
 	seekingPage := seekingPage(state)
 
 	pages := tview.NewPages().
-		AddPage("seek", seekButtons, true, true).
+		AddPage("seek", seekButtons, true, false).
 		AddPage("seeking", seekingPage, true, false).
-		AddPage("play", playLayout, true, false)
+		AddPage("play", playLayout, true, false).
+		AddPage("currentBoard", currentBoard, true, true)
 
 	openPromoteModal := func() {
 
@@ -94,7 +97,20 @@ func runUI(state *MainState) {
 			case <-time.Tick(200 * time.Millisecond):
 				// update clock display if we are playing
 				if state.Game().FullID() == "" {
-					// TODO: here we could update a display of ascii board for seekPage or for a new page maybe
+
+					if !state.UIState().IsSeeking() {
+						app.QueueUpdateDraw(func() {
+							boardState.SetText(state.Board().String())
+							if state.Board().IsStartingPosition() {
+								pages.HidePage("currentBoard")
+								pages.ShowPage("seek")
+							} else {
+								pages.ShowPage("currentBoard")
+								pages.HidePage("seek")
+							}
+						})
+					}
+
 					break
 				}
 				app.QueueUpdateDraw(func() {
@@ -136,47 +152,54 @@ func runUI(state *MainState) {
 						pages.HidePage("seek")
 						pages.HidePage("seeking")
 						pages.ShowPage("play")
+						pages.HidePage("currentBoard")
 						opponentName.SetText(getOpponentText(state.Game()))
 						playerName.SetText("You play " + state.Game().Color())
 					})
 				case GameWon:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("play")
-						pages.ShowPage("seek")
+						pages.HidePage("seek")
 						pages.HidePage("seeking")
-						seekTitle.SetText("Victory !")
+						pages.ShowPage("currentBoard")
+						currentBoardTitle.SetText("Victory !")
 					})
 				case GameLost:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("play")
-						pages.ShowPage("seek")
+						pages.HidePage("seek")
 						pages.HidePage("seeking")
-						seekTitle.SetText("Looooooose")
+						pages.ShowPage("currentBoard")
+						currentBoardTitle.SetText("Looooooose")
 					})
 				case GameAborted:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("play")
-						pages.ShowPage("seek")
+						pages.HidePage("seek")
 						pages.HidePage("seeking")
-						seekTitle.SetText("Game aborted")
+						pages.ShowPage("currentBoard")
+						currentBoardTitle.SetText("Game aborted")
 					})
 				case GameDrawn:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("play")
-						pages.ShowPage("seek")
+						pages.HidePage("seek")
 						pages.HidePage("seeking")
-						seekTitle.SetText("It's a draw ¯\\_(ツ)_/¯")
+						pages.ShowPage("currentBoard")
+						currentBoardTitle.SetText("It's a draw ¯\\_(ツ)_/¯")
 					})
 				case NoCurrentGame:
 					app.QueueUpdateDraw(func() {
-						if seekTitle.GetText(true) == "" {
-							seekTitle.SetText("Ready to play")
+						if currentBoardTitle.GetText(true) == "" {
+							currentBoardTitle.SetText("Ready to play")
 						}
 					})
 				case Seeking:
 					app.QueueUpdateDraw(func() {
 						pages.HidePage("play")
 						pages.HidePage("seek")
+						pages.HidePage("currentBoard")
+
 						pages.ShowPage("seeking")
 					})
 				case StopSeeking:
@@ -185,9 +208,11 @@ func runUI(state *MainState) {
 						if state.Game().FullID() != "" {
 							pages.ShowPage("play")
 							pages.HidePage("seek")
+							pages.HidePage("currentBoard")
 						} else {
 							pages.ShowPage("seek")
 							pages.HidePage("play")
+							pages.HidePage("currentBoard")
 						}
 					})
 				}
@@ -209,7 +234,30 @@ func runUI(state *MainState) {
 
 }
 
-func seekButtons(state *MainState) (*tview.Flex, *tview.TextView) {
+func buildCurrentBoard(state *MainState) (*tview.Flex, *tview.TextView, *tview.TextView) {
+	// Title TextView
+	boardTitle := tview.NewTextView().
+		SetText("Current Board").
+		SetTextAlign(tview.AlignCenter).
+		SetDynamicColors(true)
+
+	// Board text, centered horizontally
+	board := tview.NewTextView().
+		SetText(state.Board().String()).
+		SetTextAlign(tview.AlignCenter).
+		SetDynamicColors(true)
+
+	// Layout: Title at top (fixed height), board fills the rest
+	layout := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(boardTitle, 2, 0, false).
+		AddItem(board, 0, 1, true)
+
+	layout.SetBorder(true)
+
+	return layout, board, boardTitle
+}
+
+func seekButtons(state *MainState) *tview.Flex {
 
 	// Rows with horizontal spacing
 	row1 := tview.NewFlex().
@@ -231,7 +279,7 @@ func seekButtons(state *MainState) (*tview.Flex, *tview.TextView) {
 
 	// Title text
 	seekTitle := tview.NewTextView().
-		//SetText("You won !").
+		SetText("Ready for a new game").
 		SetTextAlign(tview.AlignCenter).
 		SetDynamicColors(true)
 
@@ -247,7 +295,7 @@ func seekButtons(state *MainState) (*tview.Flex, *tview.TextView) {
 		AddItem(tview.NewBox(), 1, 0, false). // spacing under title
 		AddItem(centeredButtons, 0, 1, true)
 
-	return layout, seekTitle
+	return layout
 }
 
 func seekingPage(state *MainState) *tview.Flex {

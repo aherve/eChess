@@ -26,6 +26,13 @@ func NewUIState() *UIState {
 	}
 }
 
+func (s *UIState) IsSeeking() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.cancelSeek != nil
+}
+
 func (s *UIState) CancelSeek() {
 	s.mu.Lock()
 	defer s.mu.Unlock()

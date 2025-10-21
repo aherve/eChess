@@ -157,6 +157,31 @@ func (b *Board) Connect(c chan bool) {
 	}
 }
 
+func (b *Board) IsStartingPosition() bool {
+	startingPosition := [8][8]chess.Color{
+		{chess.White, chess.White, chess.NoColor, chess.NoColor, chess.NoColor, chess.NoColor, chess.Black, chess.Black},
+		{chess.White, chess.White, chess.NoColor, chess.NoColor, chess.NoColor, chess.NoColor, chess.Black, chess.Black},
+		{chess.White, chess.White, chess.NoColor, chess.NoColor, chess.NoColor, chess.NoColor, chess.Black, chess.Black},
+		{chess.White, chess.White, chess.NoColor, chess.NoColor, chess.NoColor, chess.NoColor, chess.Black, chess.Black},
+		{chess.White, chess.White, chess.NoColor, chess.NoColor, chess.NoColor, chess.NoColor, chess.Black, chess.Black},
+		{chess.White, chess.White, chess.NoColor, chess.NoColor, chess.NoColor, chess.NoColor, chess.Black, chess.Black},
+		{chess.White, chess.White, chess.NoColor, chess.NoColor, chess.NoColor, chess.NoColor, chess.Black, chess.Black},
+		{chess.White, chess.White, chess.NoColor, chess.NoColor, chess.NoColor, chess.NoColor, chess.Black, chess.Black},
+	}
+
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+
+	for i := range b.state {
+		for j := range b.state[i] {
+			if b.state[i][j] != startingPosition[i][j] {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 func (b *Board) sendLEDCommand(litSquares map[int8]bool) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
