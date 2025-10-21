@@ -14,6 +14,8 @@ const PlayDelay = 250 * time.Millisecond
 
 func runBackend(state *MainState) {
 
+	go handleBoard(state)
+
 	state.Board().sendLEDCommand(state.LitSquares())
 	for state.Game().FullID() == "" {
 
@@ -32,6 +34,23 @@ func runBackend(state *MainState) {
 			state.UIState().Input <- NoCurrentGame
 			time.Sleep(3 * time.Second)
 			continue
+		}
+	}
+}
+
+func handleBoard(state *MainState) {
+	for range state.BoardNotifs() {
+		if gameID := state.Game().FullID(); gameID != "" {
+
+			state.UpdateLitSquares()
+			state.Board().sendLEDCommand(state.LitSquares())
+			if state.Game().IsMyTurn() {
+				move, needsPromotion := findValidMove(state)
+				if move != "" && needsPromotion {
+					move = addPromotion(move, state.UIState())
+				}
+				state.CandidateMove().PlayWithDelay(gameID, move)
+			}
 		}
 	}
 }
@@ -85,15 +104,6 @@ func handleGame(state *MainState) {
 			state.CandidateMove().Reset()
 			return
 		case <-state.BoardNotifs():
-			state.UpdateLitSquares()
-			board.sendLEDCommand(state.LitSquares())
-			if state.Game().IsMyTurn() {
-				move, needsPromotion := findValidMove(state)
-				if move != "" && needsPromotion {
-					move = addPromotion(move, state.UIState())
-				}
-				state.CandidateMove().PlayWithDelay(state.Game().FullID(), move)
-			}
 		}
 	}
 }

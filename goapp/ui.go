@@ -94,6 +94,7 @@ func runUI(state *MainState) {
 			case <-time.Tick(200 * time.Millisecond):
 				// update clock display if we are playing
 				if state.Game().FullID() == "" {
+					// TODO: here we could update a display of ascii board for seekPage or for a new page maybe
 					break
 				}
 				app.QueueUpdateDraw(func() {

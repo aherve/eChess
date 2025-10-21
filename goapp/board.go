@@ -40,6 +40,26 @@ func (b *Board) State() BoardState {
 	return b.state
 }
 
+func (b *Board) String() string {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	res := ""
+	for j := 7; j >= 0; j-- {
+		for i := range 8 {
+			switch b.state[i][j] {
+			case chess.White:
+				res += "W "
+			case chess.Black:
+				res += "B "
+			default:
+				res += ". "
+			}
+		}
+		res += "\n"
+	}
+	return res
+}
+
 func (b *Board) Update(squares BoardState) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
