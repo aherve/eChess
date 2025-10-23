@@ -96,8 +96,11 @@ func runUI(state *MainState) {
 			select {
 			case <-time.Tick(200 * time.Millisecond):
 				// update clock display if we are playing
+				log.Println("UI DBG: tick")
 				if state.Game().FullID() == "" {
+					log.Println("UI DBG: fullID is empty")
 					if !state.UIState().IsSeeking() {
+						log.Println("UI DBG: not seeking, launching update")
 						app.QueueUpdateDraw(func() {
 							asciiBoard := state.Board().String()
 							log.Printf("DBG updating board:\n%s", asciiBoard)
@@ -116,6 +119,7 @@ func runUI(state *MainState) {
 
 					break
 				}
+				log.Println("UI DBG: updating clocks. fullID is:", state.Game().FullID())
 				app.QueueUpdateDraw(func() {
 					var toUpdateWithElapsed *tview.TextView
 					var toUpdateWithFixed *tview.TextView
