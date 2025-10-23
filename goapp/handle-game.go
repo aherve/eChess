@@ -39,11 +39,17 @@ func runBackend(state *MainState) {
 }
 
 func handleBoard(state *MainState) {
+	log.Println("handleboar start")
 	for range state.BoardNotifs() {
+		log.Println("handleboard received event")
 		if gameID := state.Game().FullID(); gameID != "" {
+			log.Println("handleboard processing event for existing gameID")
 
 			state.UpdateLitSquares()
 			state.Board().sendLEDCommand(state.LitSquares())
+			log.Println("handleboard updated litsquares")
+			state.Board().sendLEDCommand(state.LitSquares())
+			log.Println("handleboard sent led commands")
 			if state.Game().IsMyTurn() {
 				move, needsPromotion := findValidMove(state)
 				if move != "" && needsPromotion {
@@ -52,6 +58,7 @@ func handleBoard(state *MainState) {
 				state.CandidateMove().PlayWithDelay(gameID, move)
 			}
 		}
+		log.Println("handleboard finished processing event")
 	}
 }
 
@@ -90,6 +97,7 @@ func handleGame(state *MainState) {
 		case <-chans.GameEnded:
 			log.Printf("Game ended")
 			go state.PlayEndSequence()
+			log.Println("played end sequence")
 
 			if game.Winner() == game.Color() {
 				state.UIState().Input <- GameWon
@@ -98,10 +106,14 @@ func handleGame(state *MainState) {
 			} else {
 				state.UIState().Input <- GameDrawn
 			}
+			log.Println("UI event sent after game terminated")
 
 			state.Game().Reset()
+			log.Println("handlegame: game reset")
 			state.ResetLitSquares()
+			log.Println("handlegame: lit squares reset")
 			state.CandidateMove().Reset()
+			log.Println("handlegame: candidate moves reset")
 			return
 		}
 	}
