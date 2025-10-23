@@ -46,7 +46,6 @@ func handleBoard(state *MainState) {
 			log.Println("handleboard processing event for existing gameID")
 
 			state.UpdateLitSquares()
-			state.Board().sendLEDCommand(state.LitSquares())
 			log.Println("handleboard updated litsquares")
 			state.Board().sendLEDCommand(state.LitSquares())
 			log.Println("handleboard sent led commands")
