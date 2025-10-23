@@ -68,6 +68,7 @@ func handleGame(state *MainState) {
 	log.Println("Game ID:", game.FullID(), "You are playing as", game.Color())
 
 	state.UIState().Input <- GameStarted
+	go state.UIState().ClearSeek()
 	go state.PlayStartSequence()
 
 	chans := lichess.NewLichessEventChans()

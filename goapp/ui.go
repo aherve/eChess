@@ -115,6 +115,8 @@ func runUI(state *MainState) {
 								pages.HidePage("seek")
 							}
 						})
+					} else {
+						log.Println("UI DBG: seeking, skipping update")
 					}
 
 					break

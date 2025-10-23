@@ -51,7 +51,7 @@ func CreateSeek(timeMinute, incrementSeconds string) *context.CancelFunc {
 	// Stream the response in the background
 	go streamResponse(ctx, body)
 
-	log.Println(fmt.Sprintf("%s|%s seek successfully created", timeMinute, incrementSeconds))
+	log.Printf("%s|%s seek successfully created\n", timeMinute, incrementSeconds)
 	return &cancel
 }
 
@@ -159,7 +159,8 @@ func lichessFetch(ctx context.Context, path string, params map[string]string, me
 	// Create a new request
 	var req *http.Request
 	var err error
-	if method == "POST" {
+	switch method {
+	case "POST":
 		var body = []byte(buildURLParams(params))
 		req, err = http.NewRequest(method, lichessURL, bytes.NewBuffer(body))
 		if err != nil {
@@ -167,12 +168,12 @@ func lichessFetch(ctx context.Context, path string, params map[string]string, me
 		}
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	} else if method == "GET" {
+	case "GET":
 		req, err = http.NewRequest(method, lichessURL, nil)
 		if err != nil {
 			return nil, fmt.Errorf("error creating request: %v", err)
 		}
-	} else {
+	default:
 		return nil, fmt.Errorf("unsupported method: %s", method)
 	}
 
