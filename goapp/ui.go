@@ -97,14 +97,17 @@ func runUI(state *MainState) {
 			case <-time.Tick(200 * time.Millisecond):
 				// update clock display if we are playing
 				if state.Game().FullID() == "" {
-					log.Println("DBG no game id")
 					if !state.UIState().IsSeeking() {
 						app.QueueUpdateDraw(func() {
+							asciiBoard := state.Board().String()
+							log.Printf("DBG updating board:\n%s", asciiBoard)
 							boardState.SetText(state.Board().String())
 							if state.Board().IsStartingPosition() {
+								log.Println("DBG board is starting position")
 								pages.HidePage("currentBoard")
 								pages.ShowPage("seek")
 							} else {
+								log.Println("DBG board is NOT in starting position")
 								pages.ShowPage("currentBoard")
 								pages.HidePage("seek")
 							}
