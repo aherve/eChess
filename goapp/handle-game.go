@@ -94,9 +94,10 @@ func handleGame(state *MainState) {
 			board.sendLEDCommand(state.LitSquares())
 			log.Println("Game updated", game.Moves())
 		case <-chans.GameEnded:
-			log.Printf("Game ended")
+			state.Game().Reset()
+
 			go state.PlayEndSequence()
-			log.Println("played end sequence")
+			go state.CandidateMove().Reset()
 
 			if game.Winner() == game.Color() {
 				state.UIState().Input <- GameWon
@@ -105,14 +106,6 @@ func handleGame(state *MainState) {
 			} else {
 				state.UIState().Input <- GameDrawn
 			}
-			log.Println("UI event sent after game terminated")
-
-			state.Game().Reset()
-			log.Println("handlegame: game reset")
-			state.ResetLitSquares()
-			log.Println("handlegame: lit squares reset")
-			state.CandidateMove().Reset()
-			log.Println("handlegame: candidate moves reset")
 			return
 		}
 	}
