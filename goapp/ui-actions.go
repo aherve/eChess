@@ -71,39 +71,36 @@ func (p Promotion) String() string {
 }
 
 func emitActions(state *MainState) {
+	for output := range state.UIState().Output {
+		switch output {
 
-	for {
-		select {
-		case output := <-state.UIState().Output:
-			switch output {
-			case Seek105:
-				state.UIState().CreateSeek("10", "5")
-			case Seek1510:
-				state.UIState().CreateSeek("15", "10")
-			case Seek1530:
-				state.UIState().CreateSeek("15", "30")
-			case Seek3020:
-				state.UIState().CreateSeek("30", "20")
-			case Seek3030:
-				state.UIState().CreateSeek("30", "30")
-			case CancelSeek:
-				state.UIState().CancelSeek()
-				state.UIState().Input <- StopSeeking
-			case Resign:
-				if gameID := state.Game().FullID(); gameID != "" {
-					lichess.ResignGame(gameID)
-				}
-			case Abort:
-				if gameId := state.Game().FullID(); gameId != "" {
-					lichess.AbortGame(gameId)
-				}
-			case Draw:
-				if gameId := state.Game().FullID(); gameId != "" {
-					lichess.DrawGame(gameId)
-				}
-			default:
-				log.Println("Unknown UI Output:", output)
+		case Seek105:
+			state.UIState().CreateSeek("10", "5")
+		case Seek1510:
+			state.UIState().CreateSeek("15", "10")
+		case Seek1530:
+			state.UIState().CreateSeek("15", "30")
+		case Seek3020:
+			state.UIState().CreateSeek("30", "20")
+		case Seek3030:
+			state.UIState().CreateSeek("30", "30")
+		case CancelSeek:
+			state.UIState().CancelSeek()
+			state.UIState().Input <- StopSeeking
+		case Resign:
+			if gameID := state.Game().FullID(); gameID != "" {
+				lichess.ResignGame(gameID)
 			}
+		case Abort:
+			if gameId := state.Game().FullID(); gameId != "" {
+				lichess.AbortGame(gameId)
+			}
+		case Draw:
+			if gameId := state.Game().FullID(); gameId != "" {
+				lichess.DrawGame(gameId)
+			}
+		default:
+			log.Println("Unknown UI Output:", output)
 		}
 	}
 }
