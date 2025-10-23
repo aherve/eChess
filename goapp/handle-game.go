@@ -94,10 +94,8 @@ func handleGame(state *MainState) {
 			board.sendLEDCommand(state.LitSquares())
 			log.Println("Game updated", game.Moves())
 		case <-chans.GameEnded:
+			state.CandidateMove().Reset()
 			state.Game().Reset()
-
-			go state.PlayEndSequence()
-			go state.CandidateMove().Reset()
 
 			if game.Winner() == game.Color() {
 				state.UIState().Input <- GameWon
@@ -106,6 +104,8 @@ func handleGame(state *MainState) {
 			} else {
 				state.UIState().Input <- GameDrawn
 			}
+
+			go state.PlayEndSequence()
 			return
 		}
 	}
