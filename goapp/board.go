@@ -104,13 +104,9 @@ func (b *Board) Listen(c chan bool) {
 				copy(msg[:], buff[i-18:i-2])
 				squares := buildSquares(msg)
 
-				log.Println("board listener will udpate board state:")
 				b.Update(squares)
-				log.Println("board listener is done updating board state:")
 
-				log.Println("board listener will send event to chan")
 				c <- true
-				log.Println("board listener sent to chan")
 				if len(buff) > i+1 {
 					buff = buff[i+1:]
 				} else {

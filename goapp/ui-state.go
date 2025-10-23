@@ -30,9 +30,7 @@ func (s *UIState) IsSeeking() bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	res := s.cancelSeek != nil
-	log.Println("is seeking debug", res, s.cancelSeek)
-	return res
+	return s.cancelSeek != nil
 }
 
 func (s *UIState) ClearSeek() {
@@ -40,7 +38,6 @@ func (s *UIState) ClearSeek() {
 	defer s.mu.Unlock()
 
 	s.cancelSeek = nil
-	log.Println("Seek cleared")
 }
 
 func (s *UIState) CancelSeek() {
