@@ -4,6 +4,20 @@ type FindPlayingGameResponse struct {
 	NowPlaying []GameEvent `json:"nowPlaying"`
 }
 
+type PlayerPerf struct {
+	Prov bool `json:"prov"`
+}
+type PlayerPerfs struct {
+	Rapid PlayerPerf `json:"rapid"`
+}
+type PlayerProfile struct {
+	Perfs PlayerPerfs `json:"perfs"`
+}
+
+func (p *PlayerProfile) IsProvisional() bool {
+	return p.Perfs.Rapid.Prov
+}
+
 type GameEvent struct {
 	FullID   string   `json:"fullId"`
 	GameId   string   `json:"gameId"`

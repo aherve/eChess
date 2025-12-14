@@ -55,11 +55,29 @@ func handleBoard(state *MainState) {
 	}
 }
 
+// Too many cheaters among provisional players. We abort the game right away.
+func abortIfOpponentIsProvisional(state *MainState) {
+	opponentName := state.Game().Opponent().Username
+	player, err := lichess.GetPlayer(opponentName)
+	if err != nil {
+		log.Printf("Error fetching opponent info: %v", err)
+		return
+	}
+	if player.IsProvisional() {
+		log.Printf("Opponent %s is provisional. Aborting game.", opponentName)
+		lichess.AbortGame(state.Game().FullID())
+	} else {
+		log.Printf("Opponent %s is not provisional. Moving on", opponentName)
+	}
+}
+
 func handleGame(state *MainState) {
 	game := state.Game()
 	board := state.Board()
 
 	log.Println("Game ID:", game.FullID(), "You are playing as", game.Color())
+
+	go abortIfOpponentIsProvisional(state)
 
 	state.UIState().Input <- GameStarted
 	go state.UIState().ClearSeek()

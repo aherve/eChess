@@ -283,3 +283,21 @@ func ClaimVictory(gameId string) {
 		log.Printf("Error claiming victory: %v", err)
 	}
 }
+
+func GetPlayer(username string) (*PlayerProfile, error) {
+	body, err := lichessFetch(context.Background(), fmt.Sprintf("user/%s", username), nil, "GET")
+	if err != nil {
+		return nil, fmt.Errorf("error fetching player profile: %v", err)
+	}
+	defer body.Close()
+	data, err := io.ReadAll(body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body: %v", err)
+	}
+	var profile PlayerProfile
+	err = json.Unmarshal(data, &profile)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling player profile: %v", err)
+	}
+	return &profile, nil
+}
