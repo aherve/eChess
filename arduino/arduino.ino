@@ -6,8 +6,8 @@
 
 int boardState[boardSize][boardSize];
 
-int const upTres = 570;
-int const downTres = 475;
+int const upTres = 530;
+int const downTres = 490;
 bool ledState[boardSize][boardSize];
 int const readPins[boardSize]{ A0, A1, A2, A3, A4, A5, A6, A7 };
 byte ledReadCursor;
