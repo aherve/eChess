@@ -6,7 +6,7 @@
 
 int boardState[boardSize][boardSize];
 
-int const upTres = 550;
+int const upTres = 555;
 int const downTres = 515;
 bool ledState[boardSize][boardSize];
 int const readPins[boardSize]{ A0, A1, A2, A3, A4, A5, A6, A7 };
