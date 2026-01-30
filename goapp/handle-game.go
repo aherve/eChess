@@ -57,13 +57,20 @@ func handleBoard(state *MainState) {
 
 // Too many cheaters among provisional players. We abort the game right away.
 func abortIfOpponentIsProvisional(state *MainState) {
+	speed := state.Game().Speed()
+	// Actually, aborting on Classical is a bit greedy. Let's deactivate that for now.
+	if speed == lichess.Classical {
+		log.Println("Classical game detected, opponents aren't easy to find, so we'll skip provisional check.")
+		return
+	}
+
 	opponentName := state.Game().Opponent().Username
 	player, err := lichess.GetPlayer(opponentName)
 	if err != nil {
 		log.Printf("Error fetching opponent info: %v", err)
 		return
 	}
-	speed := state.Game().Speed()
+
 	if player.IsProvisional(speed) {
 		log.Printf("Opponent %s is provisional on %s. Aborting game.", opponentName, speed)
 		lichess.AbortGame(state.Game().FullID())
