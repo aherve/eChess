@@ -1,5 +1,18 @@
 package lichess
 
+import "log"
+
+type GameSpeed string
+
+const (
+	Blitz          GameSpeed = "blitz"
+	Bullet         GameSpeed = "bullet"
+	Classical      GameSpeed = "classical"
+	Correspondence GameSpeed = "correspondence"
+	Rapid          GameSpeed = "rapid"
+	UltraBullet    GameSpeed = "ultraBullet"
+)
+
 type FindPlayingGameResponse struct {
 	NowPlaying []GameEvent `json:"nowPlaying"`
 }
@@ -8,22 +21,33 @@ type PlayerPerf struct {
 	Prov bool `json:"prov"`
 }
 type PlayerPerfs struct {
-	Rapid PlayerPerf `json:"rapid"`
+	Rapid     PlayerPerf `json:"rapid"`
+	Classical PlayerPerf `json:"classical"`
 }
 type PlayerProfile struct {
 	Perfs PlayerPerfs `json:"perfs"`
 }
 
-func (p *PlayerProfile) IsProvisional() bool {
-	return p.Perfs.Rapid.Prov
+func (p *PlayerProfile) IsProvisional(speed GameSpeed) bool {
+
+	switch speed {
+	case Classical:
+		return p.Perfs.Classical.Prov
+	case Rapid:
+		return p.Perfs.Rapid.Prov
+	}
+
+	log.Printf("unknown cadency %s", speed)
+	return false
 }
 
 type GameEvent struct {
-	FullID   string   `json:"fullId"`
-	GameId   string   `json:"gameId"`
-	Color    string   `json:"color"` // "white" or "black"
-	Fen      string   `json:"fen"`
-	Opponent Opponent `json:"opponent"`
+	FullID   string    `json:"fullId"`
+	GameId   string    `json:"gameId"`
+	Color    string    `json:"color"` // "white" or "black"
+	Fen      string    `json:"fen"`
+	Opponent Opponent  `json:"opponent"`
+	Speed    GameSpeed `json:"speed"`
 }
 
 type Opponent struct {
@@ -58,6 +82,7 @@ type GameFullEvent struct {
 	Type  string         `json:"type"`
 	State GameStateEvent `json:"state"`
 	Color string         `json:"color"`
+	Speed GameSpeed      `json:"speed"`
 }
 
 type LichessEventChans struct {

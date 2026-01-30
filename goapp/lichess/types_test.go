@@ -16,7 +16,7 @@ func TestPlayerProfileType(t *testing.T) {
 	}
 
 	// check that we correctly parsed the provisional status of rapid rating
-	if !profile.IsProvisional() {
+	if !profile.IsProvisional(Rapid) {
 		t.Errorf("Expected IsProvisional to be true, got false")
 	}
 
@@ -29,7 +29,7 @@ func TestPlayerProfileType(t *testing.T) {
 	}
 
 	// check that we correctly parsed the non-provisional status of rapid rating
-	if profileNonProv.IsProvisional() {
+	if profileNonProv.IsProvisional(Rapid) {
 		t.Errorf("Expected IsProvisional to be false, got true")
 	}
 

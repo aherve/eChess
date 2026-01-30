@@ -63,11 +63,12 @@ func abortIfOpponentIsProvisional(state *MainState) {
 		log.Printf("Error fetching opponent info: %v", err)
 		return
 	}
-	if player.IsProvisional() {
-		log.Printf("Opponent %s is provisional. Aborting game.", opponentName)
+	speed := state.Game().Speed()
+	if player.IsProvisional(speed) {
+		log.Printf("Opponent %s is provisional on %s. Aborting game.", opponentName, speed)
 		lichess.AbortGame(state.Game().FullID())
 	} else {
-		log.Printf("Opponent %s is not provisional. Moving on", opponentName)
+		log.Printf("Opponent %s is not provisional on %s. Moving on", opponentName, speed)
 	}
 }
 

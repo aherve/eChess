@@ -21,6 +21,7 @@ type Game struct {
 	moves              []string
 	chessGame          *chess.Game
 	opponentOffersDraw bool
+	speed              GameSpeed
 
 	mu sync.RWMutex
 }
@@ -31,6 +32,12 @@ func NewGame() *Game {
 		chessGame:          chess.NewGame(chess.UseNotation(chess.UCINotation{})),
 		opponentOffersDraw: false,
 	}
+}
+
+func (g *Game) Speed() GameSpeed {
+	g.mu.RLock()
+	defer g.mu.RUnlock()
+	return g.speed
 }
 
 func (g *Game) ChessGame() *chess.Game {
@@ -103,6 +110,7 @@ func (g *Game) Reset() {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
+	g.speed = ""
 	g.fullID = ""
 	g.gameId = ""
 	g.color = ""
@@ -128,6 +136,7 @@ func (g *Game) UpdateFromFindGame(evt GameEvent) {
 	g.wtime = -1
 	g.btime = -1
 	g.opponentOffersDraw = false
+	g.speed = evt.Speed
 }
 
 func (game *Game) Update(newStateEvt GameStateEvent) {
