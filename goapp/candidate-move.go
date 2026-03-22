@@ -42,6 +42,7 @@ func (cm *CandidateMove) Reset() {
 
 	cm.move = ""
 	cm.issuedAt = time.Now()
+	cm.lastMovePlayed = ""
 }
 
 /*
