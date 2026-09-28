@@ -1,6 +1,10 @@
 package lichess
 
-import "log"
+import (
+	"fmt"
+	"log"
+	"strconv"
+)
 
 type GameSpeed string
 
@@ -13,12 +17,40 @@ const (
 	UltraBullet    GameSpeed = "ultraBullet"
 )
 
+func NewGameSpeed(timeMinute, incrementSeconds string) (GameSpeed, error) {
+	incSec, err := strconv.Atoi(incrementSeconds)
+	if err != nil {
+		return "", fmt.Errorf("cannot convert %s to integer", incrementSeconds)
+	}
+
+	time, err := strconv.Atoi(timeMinute)
+	if err != nil {
+		return "", fmt.Errorf("cannot convert %s to integer", timeMinute)
+	}
+
+	normalizedTime := 60*time + 40*incSec
+	if normalizedTime <= 29 {
+		return UltraBullet, nil
+	}
+	if normalizedTime <= 179 {
+		return Bullet, nil
+	}
+	if normalizedTime <= 479 {
+		return Blitz, nil
+	}
+	if normalizedTime <= 1499 {
+		return Rapid, nil
+	}
+	return Classical, nil
+}
+
 type FindPlayingGameResponse struct {
 	NowPlaying []GameEvent `json:"nowPlaying"`
 }
 
 type PlayerPerf struct {
-	Prov bool `json:"prov"`
+	Prov   bool `json:"prov"`
+	Rating int  `json:"rating"`
 }
 type PlayerPerfs struct {
 	Rapid     PlayerPerf `json:"rapid"`

@@ -33,3 +33,59 @@ func TestBuildURLParams(t *testing.T) {
 	}
 
 }
+
+func TestNewGameSpeed(t *testing.T) {
+	cases := []struct {
+		Expected  GameSpeed
+		Increment string
+		Time      string
+	}{
+		{
+			Expected:  Blitz,
+			Increment: "3",
+			Time:      "5",
+		},
+		{
+			Expected:  Rapid,
+			Increment: "15",
+			Time:      "10",
+		},
+		{
+			Expected:  Classical,
+			Increment: "30",
+			Time:      "10",
+		},
+		{
+			Expected:  Classical,
+			Increment: "30",
+			Time:      "30",
+		},
+		{
+			Expected:  "",
+			Increment: "",
+			Time:      "",
+		},
+		{
+			Expected:  "",
+			Increment: "",
+			Time:      "nope",
+		},
+	}
+
+	for _, c := range cases {
+		actual, err := NewGameSpeed(c.Time, c.Increment)
+
+		// err case
+		if c.Expected == "" {
+			if err == nil {
+				t.Errorf("expected error for test case %v", c)
+			}
+		} else {
+			if actual != c.Expected {
+				t.Errorf("expected %s but got %s for %v", c.Expected, actual, c)
+			}
+		}
+
+	}
+
+}

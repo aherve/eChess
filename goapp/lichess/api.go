@@ -10,10 +10,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 )
+
+var secret secretFile
+var lowerSeekBoundary, upperSeekBoundary int
 
 type secretFile struct {
 	ApiToken string `json:"LICHESS_API_TOKEN"`
+	Loaded   bool
 }
 
 type withType struct {
@@ -36,10 +41,36 @@ func DrawGame(gameId string) {
 
 func CreateSeek(timeMinute, incrementSeconds string) *context.CancelFunc {
 	ctx, cancel := context.WithCancel(context.Background())
+
+	// first, get player profile to calculate elo range
+	profile, err := GetMyProfile()
+	if err != nil {
+		log.Fatalf("cannot get my profile: %v", err)
+	}
+
+	gameSpeed, err := NewGameSpeed(timeMinute, incrementSeconds)
+	if err != nil {
+		log.Fatalf("cannot get game speed from %s,%s: %v", timeMinute, incrementSeconds, err)
+	}
+
+	var myRating int
+	switch gameSpeed {
+	case Rapid:
+		myRating = profile.Perfs.Rapid.Rating
+	case Classical:
+		myRating = profile.Perfs.Classical.Rating
+	default:
+		log.Fatalf("%s game speed is not supported", gameSpeed)
+	}
+
+	lower, upper, err := getSeekingWindow()
+
+	ratingRange := fmt.Sprintf("%v-%v", myRating-lower, myRating+upper)
+
 	params := make(map[string]string)
 	params["increment"] = incrementSeconds
 	params["rated"] = "true"
-	params["ratingRange"] = ""
+	params["ratingRange"] = ratingRange
 	params["time"] = timeMinute
 	params["variant"] = "standard"
 
@@ -51,7 +82,7 @@ func CreateSeek(timeMinute, incrementSeconds string) *context.CancelFunc {
 	// Stream the response in the background
 	go streamResponse(ctx, body)
 
-	log.Printf("%s|%s seek successfully created\n", timeMinute, incrementSeconds)
+	log.Printf("%s|%s seek successfully created in %s elo range \n", timeMinute, incrementSeconds, ratingRange)
 	return &cancel
 }
 
@@ -95,17 +126,34 @@ func PlayMove(gameId string, move string) error {
 	return err
 }
 
+func GetMyProfile() (*PlayerProfile, error) {
+	body, err := lichessFetch(context.Background(), "account", map[string]string{}, "GET")
+	if err != nil {
+		return nil, fmt.Errorf("error getting player profile: %w", err)
+	}
+	defer body.Close()
+	data, err := io.ReadAll(body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body: %w", err)
+	}
+	var profile PlayerProfile
+	if err := json.Unmarshal(data, &profile); err != nil {
+		return nil, err
+	}
+	return &profile, nil
+}
+
 func FindPlayingGame(lichessGame *Game) error {
 	params := make(map[string]string)
 	params["nb"] = "1"
 	body, err := lichessFetch(context.Background(), "account/playing", params, "GET")
 	if err != nil {
-		return fmt.Errorf("error fetching playing games: %v", err)
+		return fmt.Errorf("error fetching playing games: %w", err)
 	}
 	defer body.Close()
 	data, err := io.ReadAll(body)
 	if err != nil {
-		return fmt.Errorf("error reading response body: %v", err)
+		return fmt.Errorf("error reading response body: %w", err)
 	}
 	var response FindPlayingGameResponse
 	err = json.Unmarshal(data, &response)
@@ -121,16 +169,20 @@ func FindPlayingGame(lichessGame *Game) error {
 	return nil
 }
 
-func readSecret() (string, error) {
+func getSecret() (string, error) {
+	if secret.Loaded {
+		return secret.ApiToken, nil
+	}
+
 	data, err := os.ReadFile("secret.json")
 	if err != nil {
 		return "", err
 	}
-	var secret secretFile
 	err = json.Unmarshal(data, &secret)
 	if err != nil {
 		return "", err
 	}
+	secret.Loaded = true
 	return secret.ApiToken, nil
 }
 
@@ -177,7 +229,7 @@ func lichessFetch(ctx context.Context, path string, params map[string]string, me
 		return nil, fmt.Errorf("unsupported method: %s", method)
 	}
 
-	apiToken, err := readSecret()
+	apiToken, err := getSecret()
 	if err != nil {
 		return nil, fmt.Errorf("error reading secret: %v", err)
 	}
@@ -300,4 +352,35 @@ func GetPlayer(username string) (*PlayerProfile, error) {
 		return nil, fmt.Errorf("error unmarshalling player profile: %v", err)
 	}
 	return &profile, nil
+}
+
+func getSeekingWindow() (int, int, error) {
+
+	if upperSeekBoundary > 0 && lowerSeekBoundary > 0 {
+		return lowerSeekBoundary, upperSeekBoundary, nil
+	}
+
+	lowerStr := os.Getenv("LOWER_RATING_SEEK_WINDOW")
+	upperStr := os.Getenv("UPPER_RATING_SEEK_WINDOW")
+
+	if lowerStr == "" {
+		return 0, 0, fmt.Errorf("no lower rating seek window found")
+	}
+	if upperStr == "" {
+		return 0, 0, fmt.Errorf("no upper rating seek window found")
+	}
+	var err error
+
+	lowerSeekBoundary, err = strconv.Atoi(lowerStr)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	upperSeekBoundary, err = strconv.Atoi(upperStr)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return lowerSeekBoundary, upperSeekBoundary, nil
+
 }
