@@ -6,9 +6,17 @@ import (
 	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
+
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	// load env variables
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("failed to load environment from .env file")
+	}
+
 	// Setup logger
 	f, err := os.OpenFile("/tmp/echess.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {

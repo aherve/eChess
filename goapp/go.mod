@@ -4,6 +4,7 @@ go 1.24
 
 require (
 	github.com/gdamore/tcell/v2 v2.7.1
+	github.com/joho/godotenv v1.5.1
 	github.com/notnil/chess v1.10.0
 	github.com/rivo/tview v0.0.0-20250501113434-0c592cd31026
 	go.bug.st/serial v1.6.4

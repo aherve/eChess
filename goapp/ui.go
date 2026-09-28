@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/aherve/eChess/goapp/lichess"
@@ -10,6 +11,8 @@ import (
 	"github.com/notnil/chess"
 	"github.com/rivo/tview"
 )
+
+var zenMode *bool
 
 func runUI(state *MainState) {
 	go emitActions(state)
@@ -369,7 +372,11 @@ func getOpponentText(g *lichess.Game) string {
 		return "🤝 Draw offered"
 	}
 	opponent := g.Opponent()
-	return fmt.Sprintf("(%d) %s", opponent.Rating, opponent.Username)
+	if isZenMode() {
+		return fmt.Sprintf("%s", opponent.Username)
+	} else {
+		return fmt.Sprintf("(%d) %s", opponent.Rating, opponent.Username)
+	}
 }
 
 func makeBtn(label string, action UIOutput, c chan UIOutput) *tview.Button {
@@ -377,4 +384,15 @@ func makeBtn(label string, action UIOutput, c chan UIOutput) *tview.Button {
 		SetSelectedFunc(func() { c <- action })
 
 	return btn
+}
+
+func isZenMode() bool {
+	if zenMode != nil {
+		return *zenMode
+	}
+
+	asString := os.Getenv("ZEN_MODE")
+	zenModeVal := asString == "true"
+	zenMode = &zenModeVal
+	return zenModeVal
 }
