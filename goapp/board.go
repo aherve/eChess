@@ -43,32 +43,29 @@ func (b *Board) State() BoardState {
 func (b *Board) String() string {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
-	res := ""
+	var res strings.Builder
+	res.Grow(72)
 	for j := 7; j >= 0; j-- {
 		for i := range 8 {
 			switch b.state[i][j] {
 			case chess.White:
-				res += "W "
+				res.WriteString("W ")
 			case chess.Black:
-				res += "B "
+				res.WriteString("B ")
 			default:
-				res += "· "
+				res.WriteString("· ")
 			}
 		}
-		res += "\n"
+		res.WriteString("\n")
 	}
-	return res
+	return res.String()
 }
 
 func (b *Board) Update(squares BoardState) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
-	for i := range squares {
-		for j := range squares[i] {
-			b.state[i][j] = squares[i][j]
-		}
-	}
+	b.state = squares
 }
 
 func (b *Board) Port() serial.Port {
