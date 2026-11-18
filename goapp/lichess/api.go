@@ -161,9 +161,12 @@ func FindPlayingGame(lichessGame *Game) error {
 		return err
 	}
 
-	if len(response.NowPlaying) > 0 {
-		found := response.NowPlaying[0]
-		lichessGame.UpdateFromFindGame(found)
+	// Find and return first game that isn't a correspondance game
+	for _, g := range response.NowPlaying {
+		if g.Speed != Correspondence {
+			lichessGame.UpdateFromFindGame(g)
+			return nil
+		}
 	}
 
 	return nil
